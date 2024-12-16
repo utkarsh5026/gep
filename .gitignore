@@ -166,3 +166,6 @@ cython_debug/
 *.dll
 *.so
 *.dylib
+
+/notebooks/*.md
+/notebooks/*.json
