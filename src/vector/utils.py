@@ -29,7 +29,7 @@ def create_file_content_map(root_dir: str, ignore_patterns: list[str] = [], acce
 def _read_file(file_path: Path) -> tuple[Path, str]:
     """Helper function to read a single file."""
     with open(file_path, 'r', encoding='utf-8') as f:
-        return (file_path, f.read())
+        return file_path, f.read()
 
 
 def _is_valid_file(file: Path, ignore_patterns: list[str], accept_patterns: list[str]) -> bool:
