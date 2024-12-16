@@ -1,6 +1,8 @@
 import os
 import faiss
 import numpy as np
+import asyncio
+import aiofiles
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -11,7 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from langchain_core.embeddings import Embeddings
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma, FAISS, PGVector, Pinecone
 
 
@@ -63,22 +65,22 @@ class VectorStore(ABC):
     """
 
     @abstractmethod
-    def add_vectors(self, vectors: list[EmbeddingVector]) -> None:
+    async def add_vectors(self, vectors: list[EmbeddingVector]) -> None:
         """Add vectors to the vector store."""
         pass
 
     @abstractmethod
-    def query(self, query_vector: list[float], k: int = 10, filter: Optional[dict] = None) -> list[SearchResult]:
+    async def query(self, query_vector: list[float], k: int = 10, filter: Optional[dict] = None) -> list[SearchResult]:
         """Query the vector store."""
         pass
 
     @abstractmethod
-    def delete(self, ids: list[str]) -> None:
+    async def delete(self, ids: list[str]) -> None:
         """Delete vectors from the vector store."""
         pass
 
     @abstractmethod
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Clear all vectors from the store."""
         pass
 
@@ -139,9 +141,9 @@ class FAISSVectorStore(VectorStore):
         self.index = faiss.IndexFlatL2(dimension)
         self.id_map: dict[str, int] = {}
         self.vectors: list[EmbeddingVector] = []
-        self.__load_index()
+        asyncio.create_task(self.__load_index())
 
-    def query(self, query_vector: list[float], k: int = 10, filter: Optional[dict] = None) -> list[SearchResult]:
+    async def query(self, query_vector: list[float], k: int = 10, filter: Optional[dict] = None) -> list[SearchResult]:
         """Query the FAISS store and return the top k results."""
         try:
 
@@ -166,22 +168,31 @@ class FAISSVectorStore(VectorStore):
         except Exception as e:
             raise RuntimeError(f"Failed to query FAISS: {str(e)}") from e
 
-    def __load_index(self) -> None:
+    async def __load_index(self) -> None:
         """Load the FAISS index from disk if it exists."""
         try:
-            if os.path.exists(self.index_path):
-                self.index = faiss.read_index(self.index_path)
+            idx_path = self.index_path
+            if os.path.exists(idx_path):
+                async with aiofiles.open(idx_path, 'rb') as f:
+                    index_data = await f.read()
+                self.index = await asyncio.to_thread(
+                    faiss.deserialize_index, index_data
+                )
+
         except Exception as e:
             print(f"Warning: Failed to load FAISS index: {e}")
 
-    def __save_index(self) -> None:
+    async def __save_index(self) -> None:
         """Save the FAISS index to disk."""
         try:
-            faiss.write_index(self.index, self.index_path)
+            index_data = await asyncio.to_thread(faiss.serialize_index, self.index)
+            async with aiofiles.open(self.index_path, 'wb') as f:
+                await f.write(index_data)
+
         except Exception as e:
             print(f"Warning: Failed to save FAISS index: {e}")
 
-    def add_vectors(self, vectors: list[EmbeddingVector]) -> None:
+    async def add_vectors(self, vectors: list[EmbeddingVector]) -> None:
         """Add vectors to the FAISS store."""
         try:
             if not vectors:
@@ -197,12 +208,12 @@ class FAISSVectorStore(VectorStore):
                 self.id_map[vector.id] = start_idx + i
                 self.vectors.append(vector)
 
-            self.__save_index()
+            await self.__save_index()
 
         except Exception as e:
             raise RuntimeError(f"Failed to add vectors to FAISS: {e}")
 
-    def delete(self, ids: list[str]) -> None:
+    async def delete(self, ids: list[str]) -> None:
         """Delete vectors from the FAISS store."""
         try:
             indices_to_delete = [self.id_map[id] for id in ids]
@@ -227,18 +238,18 @@ class FAISSVectorStore(VectorStore):
             self.vectors = new_vectors
             self.id_map = new_id_map
 
-            self.__save_index()
+            await self.__save_index()
 
         except Exception as e:
             raise RuntimeError(f"Failed to delete vectors from FAISS: {e}")
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Clear all vectors from the FAISS store."""
         try:
             self.index = faiss.IndexFlatL2(self.dimension)
             self.id_map = {}
             self.vectors = []
-            self.__save_index()
+            await self.__save_index()
         except Exception as e:
             raise RuntimeError(f"Failed to clear FAISS store: {e}")
 
