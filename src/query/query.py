@@ -3,7 +3,6 @@ import asyncio
 
 from dataclasses import dataclass
 from typing import Any, Optional, AsyncGenerator
-from enum import Enum, auto
 from pathlib import Path
 
 from langchain_core.language_models import BaseLanguageModel
@@ -13,13 +12,6 @@ from langchain_core.messages import BaseMessage
 from .pattern import COMMON_PATTERNS
 from src.prompt import PromptProviderType, PromptType, get_prompt_function
 from src.vector import EmbeddingManager, SearchResult
-
-
-class QueryType(Enum):
-    SEMANTIC = auto()
-    CODE_PATTERN = auto()
-    SECURITY = auto()
-    CODE_CHANGE = auto()
 
 
 @dataclass
@@ -44,7 +36,7 @@ class QueryProcessor:
                  llm: BaseLanguageModel,
                  max_results: int = 10,
                  min_relevance_score: float = 0.5,
-                 max_batch_tokens: float = 10000) -> None:
+                 max_batch_tokens: float = 6000) -> None:
         self.embedding_manager = embedding_manager
         self.llm = llm
         self.max_results = max_results
