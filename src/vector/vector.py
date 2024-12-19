@@ -33,6 +33,7 @@ class SearchResult:
     metadata: dict[str, Any]
     score: float
     vector_id: str
+    source_file: str
 
 
 class VectorStoreType(Enum):
@@ -161,7 +162,8 @@ class FAISSVectorStore(VectorStore):
                     text=vector.text,
                     metadata=vector.metadata,
                     score=float(distance),
-                    vector_id=vector.id
+                    vector_id=vector.id,
+                    source_file=vector.metadata["source"]
                 ))
 
             return results

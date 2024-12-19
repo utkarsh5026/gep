@@ -70,6 +70,9 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         wait=wait_exponential(multiplier=1, min=4, max=10),
     )
     async def embed_documents(self, documents: list[str]) -> list[list[float]]:
+        """
+        Embed a list of documents.
+        """
         batch_size = self.config.batch_size
         all_embeddings = []
         try:
@@ -88,6 +91,9 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         return all_embeddings
 
     async def embed_query(self, text: str) -> list[float]:
+        """
+        Embed a single query.
+        """
         try:
             return await self.client.aembed_query(text)
         except Exception as e:
