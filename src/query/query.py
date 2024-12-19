@@ -6,7 +6,6 @@ from typing import Any, Optional, AsyncGenerator
 from enum import Enum, auto
 from pathlib import Path
 
-from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import BaseMessage
 
@@ -90,8 +89,7 @@ class QueryProcessor:
                 if not batch:
                     break
 
-                prompt_func = get_prompt_function(prompt_type, prompt_provider)
-                prompt = prompt_func("".join(batch.contents), query)
+                prompt = self.create_prompt(query, "".join(batch.contents), prompt_type, prompt_provider)
 
                 llm_response = await self.llm.ainvoke(prompt)
                 yield llm_response
@@ -173,7 +171,7 @@ class QueryProcessor:
                 Returns the number of characters added or -1 if the result is not added.
             """
             file_content = f"\nFile: {
-                rs.source_file}\nContent:\n{rs.text}\n"
+            rs.source_file}\nContent:\n{rs.text}\n"
 
             if not force_add and curr_chars + len(file_content) > self.max_batch_tokens:
                 return -1
@@ -275,3 +273,12 @@ class QueryProcessor:
                 lines[i] = indent + lines[i].lstrip()
 
         return '\n'.join(lines)
+
+    @classmethod
+    def create_prompt(cls, query: str, content: str, prompt_type: PromptType,
+                      prompt_provider: PromptProviderType) -> str:
+        """
+        Create a prompt for the language model based on the query and code content.
+        """
+        prompt_func = get_prompt_function(prompt_type, prompt_provider)
+        return prompt_func(query, content)

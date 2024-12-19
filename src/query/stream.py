@@ -62,7 +62,6 @@ class StreamQueryProcessor(QueryProcessor):
             batch_index = 0
             curr_index = 0
 
-            prompt_func = get_prompt_function(prompt_type, prompt_provider)
             while curr_index < len(search_results):
                 print(curr_index, len(search_results))
                 batch = self._create_batch(curr_index, search_results)
@@ -71,9 +70,7 @@ class StreamQueryProcessor(QueryProcessor):
                     print("No batch found")
                     break
 
-                prompt = prompt_func(
-                    query=query,
-                    code_context="".join(batch.contents))
+                prompt = self.create_prompt(query, "".join(batch.contents), prompt_type, prompt_provider)
 
                 async for chunk in self.llm.astream(prompt):
                     yield StreamingResult(
