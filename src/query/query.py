@@ -9,9 +9,10 @@ from pathlib import Path
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import BaseMessage
 
-from src.vector import EmbeddingManager, SearchResult
+
 from .pattern import COMMON_PATTERNS
-from .prompt import PromptProviderType, PromptType, get_prompt_function
+from src.prompt import PromptProviderType, PromptType, get_prompt_function
+from src.vector import EmbeddingManager, SearchResult
 
 
 class QueryType(Enum):
@@ -43,7 +44,7 @@ class QueryProcessor:
                  llm: BaseLanguageModel,
                  max_results: int = 10,
                  min_relevance_score: float = 0.5,
-                 max_batch_tokens: float = 5000) -> None:
+                 max_batch_tokens: float = 10000) -> None:
         self.embedding_manager = embedding_manager
         self.llm = llm
         self.max_results = max_results
@@ -89,7 +90,8 @@ class QueryProcessor:
                 if not batch:
                     break
 
-                prompt = self.create_prompt(query, "".join(batch.contents), prompt_type, prompt_provider)
+                prompt = self.create_prompt(query, "".join(
+                    batch.contents), prompt_type, prompt_provider)
 
                 llm_response = await self.llm.ainvoke(prompt)
                 yield llm_response
@@ -132,6 +134,9 @@ class QueryProcessor:
         4. Returns the processed and filtered results
         """
         search_results = await self.__search_vector_db(query, filters)
+        print(f"Search results found: {len(search_results)}")
+        print([(result.source_file, result.score)
+              for result in search_results])
 
         async def process_result(result):
             code = result.text
@@ -171,7 +176,7 @@ class QueryProcessor:
                 Returns the number of characters added or -1 if the result is not added.
             """
             file_content = f"\nFile: {
-            rs.source_file}\nContent:\n{rs.text}\n"
+                rs.source_file}\nContent:\n{rs.text}\n"
 
             if not force_add and curr_chars + len(file_content) > self.max_batch_tokens:
                 return -1

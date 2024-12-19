@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from src.vector import EmbeddingManager, SearchResult
-from .query import QueryProcessor, AnalysisBatch
-from .prompt import PromptType, PromptProviderType, get_prompt_function
+from src.vector import EmbeddingManager
+from .query import QueryProcessor
+from src.prompt import PromptType, PromptProviderType
 
 
 @dataclass
@@ -70,7 +70,8 @@ class StreamQueryProcessor(QueryProcessor):
                     print("No batch found")
                     break
 
-                prompt = self.create_prompt(query, "".join(batch.contents), prompt_type, prompt_provider)
+                prompt = self.create_prompt(query, "".join(
+                    batch.contents), prompt_type, prompt_provider)
 
                 async for chunk in self.llm.astream(prompt):
                     yield StreamingResult(
