@@ -91,7 +91,7 @@ class QueryProcessor:
                     break
 
                 prompt_func = get_prompt_function(prompt_type, prompt_provider)
-                prompt = prompt_func(batch)
+                prompt = prompt_func("".join(batch.contents), query)
 
                 llm_response = await self.llm.ainvoke(prompt)
                 yield llm_response
