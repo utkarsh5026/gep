@@ -28,6 +28,12 @@ class MarkdownOutput:
     async def print_stream(self, stream: AsyncGenerator[Union[str, dict], None]):
         """Print a stream of LLM analysis results."""
         try:
+            # If stream is a string, print it directly
+            if isinstance(stream, str):
+                self._print_result(stream)
+                return
+
+            # Otherwise handle as async generator
             async for result in stream:
                 if isinstance(result, str):
                     self._print_result(result)

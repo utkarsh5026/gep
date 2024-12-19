@@ -39,7 +39,7 @@ async def main():
     await embedding_manager.add_texts(texts=texts, metadatas=metadatas)
 
     query_processor = QueryProcessor(embedding_manager=embedding_manager,
-                                     llm=ChatOpenAI(model="gpt-4o-mini"))
+                                     llm=ChatOpenAI())
 
     output_manager = create_output_manager()
 
