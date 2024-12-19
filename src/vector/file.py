@@ -7,7 +7,7 @@ import pathlib
 from dataclasses import dataclass, field
 
 from .manager import EmbeddingManager
-from src.watcher import AsyncFileWatcher, default_ignore_patterns, FileEvent, EventType
+from watcher import AsyncFileWatcher, default_ignore_patterns, FileEvent, EventType
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 logging.basicConfig(level=logging.INFO)

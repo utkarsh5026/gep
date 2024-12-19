@@ -14,9 +14,9 @@ class OutputFormat(Enum):
 class MarkdownOutput:
     """Manages formatted console output for LLM analysis results."""
 
-    def __init__(self, format: OutputFormat = OutputFormat.MARKDOWN):
-        self.format = format
-        self.console = Console()
+    def __init__(self, console: Console, output_format: OutputFormat = OutputFormat.MARKDOWN):
+        self.format = output_format
+        self.console = console
 
     def _print_result(self, content: str):
         """Print a single result with appropriate formatting."""

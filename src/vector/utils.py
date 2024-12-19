@@ -56,3 +56,6 @@ def _is_valid_file(file: Path, ignore_patterns: list[str], accept_patterns: list
         return False
 
     return True
+
+
+

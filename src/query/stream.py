@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from src.vector import EmbeddingManager
-from .query import QueryProcessor
-from src.prompt import PromptType, PromptProviderType
+from vector import EmbeddingManager
+from query import QueryProcessor
+from prompt import PromptType, PromptProviderType
 
 
 @dataclass

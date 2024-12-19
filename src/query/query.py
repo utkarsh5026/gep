@@ -10,8 +10,8 @@ from langchain_core.messages import BaseMessage
 
 
 from .pattern import COMMON_PATTERNS
-from src.prompt import PromptProviderType, PromptType, get_prompt_function
-from src.vector import EmbeddingManager, SearchResult
+from prompt import PromptProviderType, PromptType, get_prompt_function
+from vector import EmbeddingManager, SearchResult
 
 
 @dataclass
