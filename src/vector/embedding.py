@@ -13,8 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class EmbeddingProviderType(Enum):
-    OPENAI = auto()
-    CLAUDE = auto()
+    OPENAI = "openai"
+    CLAUDE = "claude"
+    GEMINI = "gemini"
+    COHERE = "cohere"
 
 
 class EmbeddingConfig:

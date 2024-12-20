@@ -40,10 +40,10 @@ class VectorStoreType(Enum):
     """
     Enum for the type of vector store.
     """
-    CHROMA = auto()
-    PGVECTOR = auto()
-    FAISS = auto()
-    PINECONE = auto()
+    CHROMA = "chroma"
+    PGVECTOR = "pgvector"
+    FAISS = "faiss"
+    PINECONE = "pinecone"
 
 
 @dataclass
