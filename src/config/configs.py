@@ -92,91 +92,153 @@ class ProjectConfig(BaseModel):
 
 def sample_config() -> str:
     """Creates a sample YAML configuration with detailed descriptions for all parameters"""
-    return """# Sample Configuration File with Descriptions
+    return """# AI-Powered Code Search Configuration
+# This configuration file controls how the code search tool processes and interacts with your codebase.
 
-# Root directory of your project
+# Root directory of your project (required)
+# Use absolute path or relative path from the config file location
 root_dir: "./project"
 
 # Embedding Configuration
 embedding_config:
-  # Type of embedding provider to use (options: openai, huggingface, cohere)
+  # Type of embedding provider (required)
+  # Supported providers: openai, huggingface, cohere
   embedding_type: "openai"
   
-  # Name of the embedding model to use
-  # - For OpenAI: "text-embedding-ada-002"
-  # - For HuggingFace: Model name from HuggingFace hub
-  model_name: "text-embedding-ada-002"
+  # Model name for generating embeddings (required)
+  # OpenAI options: 
+  #   - text-embedding-3-small (1536 dimensions, recommended)
+  #   - text-embedding-3-large (3072 dimensions)
+  #   - text-embedding-ada-002 (legacy)
+  # HuggingFace: Use model name from hub (e.g., "sentence-transformers/all-mpnet-base-v2")
+  model_name: "text-embedding-3-small"
   
-  # Number of items to process in a single batch
+  # Processing batch size for embeddings (optional)
+  # Larger values process more text at once but use more memory
+  # Default: 100
   batch_size: 100
   
-  # Dimension of the embedding vectors
+  # Vector dimension (required)
+  # Must match the output dimension of your chosen embedding model
+  # Common values: 1536 (OpenAI), 768/1024 (HuggingFace)
   dimension: 1536
   
-  # Additional parameters specific to the embedding provider
-  additional_params:
-    # Add any provider-specific parameters here
-    # key: value
+  # Provider-specific parameters (optional)
+  # Example for HuggingFace:
+  # additional_params:
+  #   device: "cuda"  # Use GPU acceleration
+  #   normalize_embeddings: true
+  additional_params: null
 
 # LLM (Language Model) Configuration
 llm_config:
-  # Type of LLM provider (options: openai, anthropic, huggingface)
+  # LLM provider type (required)
+  # Supported: openai, anthropic, huggingface
   llm_type: "openai"
   
-  # Name of the LLM model to use
-  # - For OpenAI: "gpt-4", "gpt-3.5-turbo"
-  # - For Anthropic: "claude-2", "claude-instant-1"
-  model_name: "gpt-4"
+  # Model name (required)
+  # OpenAI options: 
+  #   - gpt-4-turbo-preview (recommended)
+  #   - gpt-4
+  #   - gpt-3.5-turbo
+  # Anthropic options:
+  #   - claude-3-opus
+  #   - claude-3-sonnet
+  #   - claude-2.1
+  model_name: "gpt-4-turbo-preview"
   
-  # Controls randomness in the output (0.0 to 1.0)
-  # Lower values make the output more focused and deterministic
+  # Response temperature (optional)
+  # Range: 0.0 to 1.0
+  # - 0.0: Focused, deterministic
+  # - 0.7: Balanced creativity (default)
+  # - 1.0: Maximum creativity
   temperature: 0.7
   
-  # Maximum number of tokens in the response (optional)
+  # Maximum response length in tokens (optional)
+  # Default: None (model maximum)
+  # Set lower to control costs and response length
   max_tokens: 1000
   
-  # Controls diversity via nucleus sampling (0.0 to 1.0)
+  # Top-p sampling (optional)
+  # Controls response diversity
+  # Range: 0.0 to 1.0, Default: 1.0
   top_p: 1.0
   
-  # Reduces repetition of token sequences (-2.0 to 2.0)
+  # Frequency penalty (optional)
+  # Prevents word repetition
+  # Range: -2.0 to 2.0, Default: 0.0
   frequency_penalty: 0.0
   
-  # Controls topic focus vs exploration (-2.0 to 2.0)
+  # Presence penalty (optional)
+  # Encourages topic diversity
+  # Range: -2.0 to 2.0, Default: 0.0
   presence_penalty: 0.0
   
-  # Additional parameters specific to the LLM provider
-  additional_params:
-    # Add any provider-specific parameters here
-    # key: value
+  # Provider-specific parameters (optional)
+  additional_params: null
 
 # Vector Store Configuration
 vector_config:
-  # Type of vector store (options: faiss, chroma, pinecone)
+  # Vector store type (required)
+  # Supported: faiss (local), chroma (local), pinecone (cloud)
   store_type: "faiss"
   
-  # Directory to persist vector store
+  # Storage directory (required for local stores)
+  # Relative to project root or absolute path
   persist_dir: "./vector_store"
   
-  # Dimension of vectors to store (should match embedding dimension)
+  # Vector dimension (required)
+  # Must match embedding dimension
   dimension: 1536
   
-  # Additional parameters specific to the vector store
-  additional_params:
-    # Add any vector store-specific parameters here
-    # key: value
+  # Store-specific parameters (optional)
+  # Example for Pinecone:
+  # additional_params:
+  #   environment: "production"
+  #   index_name: "code-search"
+  additional_params: null
 
-# Patterns to ignore during processing (glob patterns)
+# File Pattern Configuration
+
+# Patterns to ignore (glob format)
+# Common defaults are provided, add project-specific patterns as needed
 ignore_patterns:
+  # Version Control
   - "**/.git/**"
+  - "**/.svn/**"
+  
+  # Dependencies
   - "**/node_modules/**"
+  - "**/venv/**"
+  - "**/.env/**"
+  
+  # Build outputs
+  - "**/dist/**"
+  - "**/build/**"
   - "**/__pycache__/**"
-  - "**/.env"
+  
+  # IDE files
+  - "**/.vscode/**"
+  - "**/.idea/**"
+  
+  # Temporary files
+  - "**/*.log"
+  - "**/*.tmp"
+  - "**/.DS_Store"
 
-# Patterns to specifically include during processing (glob patterns)
+# Patterns to explicitly include (glob format)
+# Override ignore patterns for specific files
 accepted_patterns:
-  - "**/*.py"
-  - "**/*.js"
-  - "**/*.java"
+  - "**/*.py"    # Python files
+  - "**/*.js"    # JavaScript files
+  - "**/*.ts"    # TypeScript files
+  - "**/*.java"  # Java files
+  - "**/*.cpp"   # C++ files
+  - "**/*.h"     # Header files
+  - "**/*.go"    # Go files
+  - "**/*.rs"    # Rust files
+  - "**/*.rb"    # Ruby files
+  - "**/*.php"   # PHP files
 """
 
 
@@ -189,3 +251,37 @@ def create_sample_config_file(file_path: Optional[str]) -> None:
 
     with open(file_path, "w") as f:
         f.write(sample_config())
+
+
+def create_config_dict(config: ProjectConfig) -> dict[str, Any]:
+    """
+    Creates a dictionary from the given configuration
+    """
+    return {
+        'root_dir': str(config.root_dir),
+        'embedding_config': {
+            'embedding_type': config.emb_config.embedding_type.value,
+            'model_name': config.emb_config.model_name,
+            'batch_size': config.emb_config.batch_size,
+            'dimension': config.emb_config.dimension,
+            'additional_params': config.emb_config.additional_params
+        },
+        'llm_config': {
+            'llm_type': config.llm_config.llm_type.value,
+            'model_name': config.llm_config.model_name,
+            'temperature': config.llm_config.temperature,
+            'max_tokens': config.llm_config.max_tokens,
+            'top_p': config.llm_config.top_p,
+            'frequency_penalty': config.llm_config.frequency_penalty,
+            'presence_penalty': config.llm_config.presence_penalty,
+            'additional_params': config.llm_config.additional_params
+        },
+        'vector_config': {
+            'store_type': config.vector_config.store_type.value,
+            'persist_dir': str(config.vector_config.persist_dir),
+            'dimension': config.vector_config.dimension,
+            'additional_params': config.vector_config.additional_params
+        },
+        'ignore_patterns': config.ignore_patterns,
+        'accepted_patterns': config.accepted_patterns
+    }

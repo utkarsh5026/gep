@@ -8,10 +8,10 @@ from rich.syntax import Syntax
 from pyperclip import copy as copy_to_clipboard
 
 
-from vector import EmbeddingManager, EmbeddingProvider, VectorStoreType, EmbeddingProviderType
+from vector import VectorStoreType, EmbeddingProviderType
 from query import QueryProcessor, LLMType
-from prompt import PromptProviderType, PromptType, PromptProvider
-from config import create_sample_config_file, init_project as init_project, sample_config
+from prompt import PromptProviderType, PromptType
+from config import create_sample_config_file, init_project as init_project, sample_config, ProjectManager
 
 
 # Configure rich-click
@@ -159,6 +159,7 @@ def create_sample_config(config_path: str, on_screen: bool):
         console.print(f"Sample configuration file created at {config_path}")
 
 
+@cli.command(name='init')
 @click.option('--root-path', '-r', type=click.Path(exists=True), default='.', help='The root path to watch')
 @click.option('--overwrite/--no-overwrite', '-o', is_flag=True, help='Overwrite existing project')
 @click.option('--api-provider', '-a', type=click.Choice(api_providers), default='openai', help='The API provider to use')
@@ -182,3 +183,55 @@ def init(root_path: str, api_provider: str, api_key: str, overwrite: bool):
             title="[bold]Project Status",
             border_style="green"
         ))
+
+
+@cli.command(name='upnore')
+@click.option('--update-vector-store', '-v', is_flag=True, help='Update the vector store (remove the files we need to ignore)')
+def update_ignore(update_vector_store: bool):
+    """
+    Update the files which we need to ignore.
+    """
+
+    try:
+        old_patterns, new_patterns = ProjectManager.update_ignore()
+        old_set, new_set = set(old_patterns), set(new_patterns)
+
+        removed_patterns = old_set - new_set
+        added_patterns = new_set - old_set
+        unchanged_patterns = old_set & new_set
+
+        panel_content = "[yellow]Changes in Ignore Patterns:[/yellow]\n"
+
+        if removed_patterns:
+            panel_content += "\n[red]Removed Patterns:[/red]\n"
+            panel_content += '\n'.join(
+                f'- [red]{pattern}[/red]' for pattern in sorted(removed_patterns))
+
+        if added_patterns:
+            panel_content += "\n[green]Added Patterns:[/green]\n"
+            panel_content += '\n'.join(
+                f'+ [green]{pattern}[/green]' for pattern in sorted(added_patterns))
+
+        if unchanged_patterns:
+            panel_content += "\n[blue]Unchanged Patterns:[/blue]\n"
+            panel_content += '\n'.join(
+                f'  [dim]{pattern}[/dim]' for pattern in sorted(unchanged_patterns))
+
+        if not (removed_patterns or added_patterns):
+            panel_content += "\n[dim]No changes in ignore patterns[/dim]"
+
+        console.print(Panel(
+            panel_content,
+            title="[bold]Ignore Patterns Diff[/bold]",
+            border_style="cyan",
+            padding=(1, 2)
+        ))
+
+    except Exception as e:
+        console.print(Panel(
+            f"[bold red]Error updating ignore patterns:[/bold red]\n{str(e)}",
+            title="[bold red]Error[/bold red]",
+            border_style="red",
+            padding=(1, 2)
+        ))
+        return

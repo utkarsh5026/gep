@@ -3,7 +3,7 @@ from typing import Optional
 from pathlib import Path
 
 from .api import APIProvider, APIKeyManager
-from .configs import ProjectConfig, EmbeddingConfig, LLMConfig, create_sample_config_file
+from .configs import ProjectConfig, EmbeddingConfig, LLMConfig, create_sample_config_file, sample_config, create_config_dict
 from vector import EmbeddingProviderType
 from query import LLMType
 
@@ -20,7 +20,7 @@ class ProjectManager:
         self.vector_store_dir = self.aigrep_dir / self.VECTOR_STORE_DIR_NAME
 
     def load(self):
-        self.__load_config()
+        return self.__load_config()
 
     def init(self, api_provider: Optional[APIProvider] = None, api_key: Optional[str] = None, overwrite: bool = False):
         """
@@ -38,74 +38,15 @@ class ProjectManager:
         self.aigrep_dir.mkdir(parents=True, exist_ok=True)
         create_sample_config_file(str(self.config_file))
 
-    def __load(self, api_provider: Optional[APIProvider] = None, api_key: Optional[str] = None, embedding_config: Optional[EmbeddingConfig] = None, llm_config: Optional[LLMConfig] = None, load_gitignore: bool = True, accept_patterns: list[str] = []):
-        """Initialize a new project with custom configurations.
-
-        Args:
-            api_provider (Optional[APIProvider]): The API provider to use for authentication. 
-                If None, will use default provider. (OpenAI | Anthropic)
-            api_key (Optional[str]): API key for authentication. If None, will attempt to load from environment.
-            embedding_config (Optional[EmbeddingConfig]): Configuration for the embedding model.
-                If None, will use default OpenAI config.
-            llm_config (Optional[LLMConfig]): Configuration for the language model.
-                If None, will use default OpenAI config.
-            load_gitignore (bool): Whether to load ignore patterns from .gitignore files.
-                Defaults to True.
-            accept_patterns (list[str]): List of file patterns to explicitly include.
-                Defaults to empty list.
-
-        Raises:
-            ValueError: If project is already initialized in the root directory.
-
-        Returns:
-            None
-        """
-        if self.aigrep_dir.exists():
-            raise ValueError(f"Project already initialized in {self.root_dir}")
-
-        self.aigrep_dir.mkdir(parents=True, exist_ok=True)
-        self.__set_api_key(api_provider, api_key)
-
-        emb_config, llm_config = self.__check_config(
-            embedding_config, llm_config)
-
-        ignore_patterns = []
-        if load_gitignore:
-            ignore_patterns = self.__get_ignore_patterns()
-
-        config = ProjectConfig(
-            root_dir=self.root_dir,
-            emb_config=emb_config,
-            llm_config=llm_config,
-            ignore_patterns=ignore_patterns,
-            accepted_patterns=accept_patterns,
-        )
-
-        self.__save_config(config)
-
-    def __check_config(self, emb_config: Optional[EmbeddingConfig], llm_config: Optional[LLMConfig]):
-        """Check and set default configurations if not provided"""
-        if emb_config is None:
-            emb_config = EmbeddingConfig(
-                embedding_type=EmbeddingProviderType.OPENAI,
-                model_name="text-embedding-3-small",
-            )
-
-        if llm_config is None:
-            llm_config = LLMConfig(
-                llm_type=LLMType.OPENAI,
-                model_name="gpt-4o-mini",
-            )
-
-        return emb_config, llm_config
-
-    def __get_ignore_patterns(self) -> list[str]:
+    def __collect_gitignore_patterns(self) -> list[str]:
         """
         Load ignore patterns from all .gitignore files in the project directory
         and return a list of patterns.
         """
         ignored_patterns = set()
-        for gitignore_file in self.aigrep_dir.rglob('*.gitignore'):
+        ignore_files = self.root_dir.rglob('*.gitignore')
+        for gitignore_file in ignore_files:
+            print(gitignore_file)
             try:
                 with open(gitignore_file, 'r') as file:
                     lines = file.readlines()
@@ -115,6 +56,9 @@ class ProjectManager:
             except Exception as e:
                 print(f"Error reading {gitignore_file}: {e}")
 
+        ignored_patterns.add(f"{self.AIGREP_DIR_NAME}/**")
+        ignored_patterns.add(".git/**")
+        ignored_patterns.add("**/ignore/**")
         return list(ignored_patterns)
 
     def __load_config(self) -> ProjectConfig:
@@ -127,11 +71,14 @@ class ProjectManager:
         with open(self.config_file, 'r') as file:
             config = yaml.safe_load(file)
 
-        return ProjectConfig(**config)
+        return ProjectConfig.from_dict(config)
 
     def __save_config(self, config: ProjectConfig):
+        """Save the project configuration to the config.yaml file"""
+        config_dict = create_config_dict(config)
         with open(self.config_file, 'w') as file:
-            yaml.dump(config.model_dump(), file)
+            yaml.dump(config_dict, file,
+                      default_flow_style=False, sort_keys=False)
 
     def __set_api_key(self, api_provider: Optional[APIProvider], api_key: Optional[str]):
         """Set the API key for the given API provider"""
@@ -155,6 +102,26 @@ class ProjectManager:
         project_config = ProjectConfig.from_dict(config)
         manager = ProjectManager(project_config.root_dir)
         manager.create()
+
+    @staticmethod
+    def update_ignore():
+        """
+        Update the files which we need to ignore.
+        """
+        project_root = find_project_root()
+        if project_root is None:
+            raise ValueError("No project found in the current directory")
+
+        proj = ProjectManager(project_root)
+        config = proj.__load_config()
+
+        old_ignore_patterns = config.ignore_patterns
+        new_ignore_patterns = proj.__collect_gitignore_patterns()
+
+        config.ignore_patterns = new_ignore_patterns
+        proj.__save_config(config)
+
+        return old_ignore_patterns, new_ignore_patterns
 
 
 def find_project_root(start_dir: str = ".") -> Optional[Path]:
