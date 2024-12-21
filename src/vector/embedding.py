@@ -19,7 +19,7 @@ class EmbeddingProviderType(Enum):
     COHERE = "cohere"
 
 
-class EmbeddingConfig:
+class EmbeddingProviderConfig:
     """
     Configuration for embeddings.
     """
@@ -36,7 +36,7 @@ class EmbeddingProvider(ABC):
     Abstract base class for embedding providers.
     """
 
-    def __init__(self, config: EmbeddingConfig) -> None:
+    def __init__(self, config: EmbeddingProviderConfig) -> None:
         self.config = config
 
     @abstractmethod
@@ -59,7 +59,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
     OpenAI embedding provider.
     """
 
-    def __init__(self, config: EmbeddingConfig) -> None:
+    def __init__(self, config: EmbeddingProviderConfig) -> None:
         super().__init__(config)
         self.client = OpenAIEmbeddings(
             model=config.model_name,
@@ -103,7 +103,8 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             raise
 
 
-def create_embedding_provider(provider_type: EmbeddingProviderType, config: EmbeddingConfig) -> EmbeddingProvider:
+def create_embedding_provider(provider_type: EmbeddingProviderType,
+                              config: EmbeddingProviderConfig) -> EmbeddingProvider:
     """
     Create an embedding provider.
     """
