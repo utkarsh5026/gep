@@ -1,5 +1,6 @@
 import re
 import asyncio
+from enum import Enum
 
 from dataclasses import dataclass
 from typing import Any, Optional, AsyncGenerator
@@ -21,6 +22,14 @@ class AnalysisBatch:
     contents: list[str]
     total_chars: int
     metadata: dict[str, Any]
+
+
+class LLMType(Enum):
+    """Types of LLM providers supported by the system"""
+    OPENAI = "openai"
+    GEMINI = "gemini"
+    CLAUDE = "claude"
+    HUGGINGFACE = "huggingface"
 
 
 class QueryProcessor:
