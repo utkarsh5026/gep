@@ -2,16 +2,13 @@ import rich_click as click
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import track
-from rich.syntax import Syntax
-
-from pyperclip import copy as copy_to_clipboard
 
 
 from vector import VectorStoreType, EmbeddingProviderType
 from query import QueryProcessor, LLMType
 from prompt import PromptProviderType, PromptType
-from config import create_sample_config_file, init_project as init_project, sample_config, ProjectManager
+from config import ProjectManager
+from cmd.commands import EmbedCommand, APIKeyCommand, InitProjectCommand, SampleConfigCommand, UpdateIgnoreCommand
 
 
 # Configure rich-click
@@ -72,11 +69,6 @@ def cli():
 def process_query(query: str, relevance_score: float, max_results: int, prompt_type: str, prompt_provider: str):
     """
     Process a query and return results.
-
-    Arguments:\n
-        query: The query string to process\n
-        relevance_score: The relevance score to use for filtering results (default: 0.5)\n
-        max_results: The maximum number of results to process (default: 10)
     """
     with console.status("[bold green]Processing query..."):
         processor = QueryProcessor()
@@ -84,53 +76,14 @@ def process_query(query: str, relevance_score: float, max_results: int, prompt_t
         console.print(Panel(f"Result: {result}", title="Query Result"))
 
 
-@cli.command()
-@click.option('--provider', '-p',
-              type=click.Choice(['openai', 'local']),
-              default='openai',
-              help='Select the embedding provider')
-@click.option('--create/--no-create',
-              default=False,
-              help='Create new embeddings')
-def manage_embeddings(provider: str, create: bool):
-    """
-    Manage embedding operations.
-
-    Options:
-        --provider: The embedding provider to use
-        --create: Whether to create new embeddings
-    """
-    console.print(f"\n[bold]Embedding Management - Using {provider}[/bold]")
-
-    if create:
-        for step in track(range(100), description="Creating embeddings..."):
-            # Your embedding creation logic here
-            pass
-        console.print("[green]Embeddings updated successfully![/green]")
-
-
-@cli.command()
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def status(verbose: bool):
-    """Check the status of the application."""
-    with console.status("[bold blue]Checking status..."):
-        # Add your status check logic here
-        status_msg = "All systems operational"
-        console.print(Panel(status_msg, title="Status Check"))
-
-        if verbose:
-            # Add detailed status information
-            console.print("[dim]Detailed status information...[/dim]")
-
-
-@cli.command()
+@cli.command(name='load')
 @click.option('--root-path', '-r', type=click.Path(exists=True), default='.', help='The root path to watch')
 @click.option('--config-path', '-c', type=click.Path(exists=True), default='config.yaml', help='The path to the project configuration file')
 @click.option('--api-provider', '-a', type=click.Choice(api_providers), default='openai', help='The API provider to use')
 @click.option('--use-gitignore', '-g', is_flag=True, help='Use gitignore to ignore files')
-def init(root_path: str, config_path: str, api_provider: str, api_key: str, use_gitignore: bool):
+def load_project(root_path: str, config_path: str, api_provider: str, api_key: str, use_gitignore: bool):
     """
-    Initialize the application.
+    Load the project.
     """
     ProjectManager.load_from_yaml(root_path, config_path)
 
@@ -142,21 +95,9 @@ def create_sample_config(config_path: str, on_screen: bool):
     """
     Create a sample configuration file for the project.
     """
-    if on_screen:
-        yaml_content = sample_config()
-        syntax = Syntax(yaml_content, "yaml",
-                        theme="monokai",
-                        line_numbers=True,
-                        padding=(1, 1, 1, 1))
-        console.print(Panel(syntax, title="Sample Configuration"))
-
-        copy_to_clipboard(yaml_content)
-        console.print(
-            "[bold green]Sample configuration file copied to clipboard 😃[/bold green]")
-
-    else:
-        create_sample_config_file(config_path)
-        console.print(f"Sample configuration file created at {config_path}")
+    SampleConfigCommand(console=console,
+                        config_path=config_path,
+                        on_screen=on_screen).run()
 
 
 @cli.command(name='init')
@@ -168,21 +109,11 @@ def init(root_path: str, api_provider: str, api_key: str, overwrite: bool):
     """
     Initialize the project.
     """
-    console.print("\n[bold blue]🚀 Initializing Project[/bold blue]")
-    with console.status("[bold green]Setting up your project..."):
-        manager = init_project(root_path, api_provider, api_key, overwrite)
-        console.print(
-            "\n[bold green]✨ Project initialized successfully![/bold green]")
-        console.print(Panel.fit(
-            f"""
-[yellow]Project Details:[/yellow]
-• Root Path: [cyan]{manager.root_dir.resolve()}[/cyan]
-• API Provider: [cyan]{api_provider}[/cyan]
-• Configuration: [cyan]Ready[/cyan]
-            """,
-            title="[bold]Project Status",
-            border_style="green"
-        ))
+    InitProjectCommand(console=console,
+                       root_path=root_path,
+                       api_provider=api_provider,
+                       api_key=api_key,
+                       overwrite=overwrite).run()
 
 
 @cli.command(name='upnore')
@@ -191,47 +122,27 @@ def update_ignore(update_vector_store: bool):
     """
     Update the files which we need to ignore.
     """
+    UpdateIgnoreCommand(console=console,
+                        update_vector_store=update_vector_store).run()
 
-    try:
-        old_patterns, new_patterns = ProjectManager.update_ignore()
-        old_set, new_set = set(old_patterns), set(new_patterns)
 
-        removed_patterns = old_set - new_set
-        added_patterns = new_set - old_set
-        unchanged_patterns = old_set & new_set
+@cli.command()
+def embed():
+    """
+    Embed the project and store the embeddings in the vector store.
+    """
+    EmbedCommand(console=console).run()
 
-        panel_content = "[yellow]Changes in Ignore Patterns:[/yellow]\n"
 
-        if removed_patterns:
-            panel_content += "\n[red]Removed Patterns:[/red]\n"
-            panel_content += '\n'.join(
-                f'- [red]{pattern}[/red]' for pattern in sorted(removed_patterns))
-
-        if added_patterns:
-            panel_content += "\n[green]Added Patterns:[/green]\n"
-            panel_content += '\n'.join(
-                f'+ [green]{pattern}[/green]' for pattern in sorted(added_patterns))
-
-        if unchanged_patterns:
-            panel_content += "\n[blue]Unchanged Patterns:[/blue]\n"
-            panel_content += '\n'.join(
-                f'  [dim]{pattern}[/dim]' for pattern in sorted(unchanged_patterns))
-
-        if not (removed_patterns or added_patterns):
-            panel_content += "\n[dim]No changes in ignore patterns[/dim]"
-
-        console.print(Panel(
-            panel_content,
-            title="[bold]Ignore Patterns Diff[/bold]",
-            border_style="cyan",
-            padding=(1, 2)
-        ))
-
-    except Exception as e:
-        console.print(Panel(
-            f"[bold red]Error updating ignore patterns:[/bold red]\n{str(e)}",
-            title="[bold red]Error[/bold red]",
-            border_style="red",
-            padding=(1, 2)
-        ))
-        return
+@cli.command(name='api-key')
+@click.option('--op-type', '-o', type=click.Choice(['add', 'delete', 'get']), help='The type of operation to perform')
+@click.option('--api-provider', '-a', type=click.Choice(api_providers), help='The API provider to use')
+@click.option('--api-key', '-k', type=str, help='The API key to use')
+def api_key(op_type: str, api_provider: str, api_key: str):
+    """
+    Manage API keys.
+    """
+    APIKeyCommand(console=console,
+                  op_type=op_type,
+                  api_provider=api_provider,
+                  api_key=api_key).run()

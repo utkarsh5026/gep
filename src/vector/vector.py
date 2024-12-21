@@ -260,6 +260,14 @@ class FAISSVectorStore(VectorStore):
         except Exception as e:
             raise RuntimeError(f"Failed to clear FAISS store: {e}")
 
+    async def get_stats(self) -> dict[str, Any]:
+        """Get stats about the FAISS store."""
+        return {
+            "num_vectors": len(self.vectors),
+            "dimension": self.dimension,
+            "index_path": self.index_path
+        }
+
 
 class PGVectorStore(VectorStore):
     """
