@@ -1,5 +1,3 @@
-# test_watcher.py
-
 from src.watcher import start_watching, FileWatcher, EventType, FileEvent
 import queue
 import time

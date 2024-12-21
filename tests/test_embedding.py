@@ -1,7 +1,7 @@
 import pytest
 import os
 from src.vector.embedding import (
-    EmbeddingConfig,
+    EmbeddingProviderConfig,
     OpenAIEmbeddingProvider,
     create_embedding_provider,
     EmbeddingProviderType,
@@ -14,7 +14,7 @@ load_dotenv()
 @pytest.mark.asyncio
 async def test_openai_embedding_provider():
     api_key = os.getenv("OPENAI_API_KEY")
-    config = EmbeddingConfig(
+    config = EmbeddingProviderConfig(
         model_name="text-embedding-ada-002",  # OpenAI's standard embedding model
         api_key=api_key,
         batch_size=10
