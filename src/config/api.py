@@ -19,6 +19,13 @@ class APIKeyNotFoundError(Exception):
         super().__init__(f"API key not found for {provider.value}")
 
 
+class InvalidProviderError(Exception):
+    """Raised when an invalid provider is provided"""
+
+    def __init__(self, provider: str) -> None:
+        super().__init__(f"Invalid provider: {provider}")
+
+
 class APIKeyManager:
     """Manages API keys securely using system keyring"""
 
@@ -45,6 +52,7 @@ class APIKeyManager:
 
 def verify_provider(name: str) -> APIProvider:
     """Verify the provider is valid"""
-    if name.lower() in APIProvider.__members__.values():
+    try:
         return APIProvider(name.lower())
-    raise ValueError(f"Invalid provider: {name}")
+    except ValueError:
+        raise InvalidProviderError(name)
