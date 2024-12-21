@@ -90,7 +90,21 @@ class ProjectManager:
             APIKeyManager.set_api_key(api_provider, api_key)
 
     @staticmethod
-    def load_from_yaml(root_dir: str, yaml_file_path: str):
+    def self_load() -> ProjectConfig:
+        """
+        Load the project from the current directory.
+        """
+        root_dir = find_project_root()
+        if root_dir is None:
+            raise ValueError("No project found in the current directory")
+
+        manager = ProjectManager(root_dir)
+        config = manager.__load_config()
+        config.root_dir = str(root_dir)
+        return config
+
+    @staticmethod
+    def load_from_yaml(yaml_file_path: str):
 
         if not Path(yaml_file_path).exists():
             raise ValueError(f"No project configuration found at {
@@ -128,7 +142,8 @@ def find_project_root(start_dir: str = ".") -> Optional[Path]:
     """Find the root directory of a project by looking for .aigrep directory"""
     current_dir = Path(start_dir).resolve()
     while not (current_dir / ProjectManager.AIGREP_DIR_NAME).exists():
-        if current_dir == Path("/"):
+        # Check if we've reached the root directory
+        if current_dir == current_dir.parent:
             return None
         current_dir = current_dir.parent
     return current_dir
