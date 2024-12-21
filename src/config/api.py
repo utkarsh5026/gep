@@ -12,6 +12,13 @@ class APIProvider(Enum):
     HUGGINGFACE = "huggingface"
 
 
+class APIKeyNotFoundError(Exception):
+    """Raised when an API key is not found"""
+
+    def __init__(self, provider: APIProvider) -> None:
+        super().__init__(f"API key not found for {provider.value}")
+
+
 class APIKeyManager:
     """Manages API keys securely using system keyring"""
 
@@ -25,7 +32,10 @@ class APIKeyManager:
     @classmethod
     def get_api_key(cls, provider: APIProvider) -> Optional[str]:
         """Retrieve API key from system keyring"""
-        return keyring.get_password(cls.SERVICE_NAME, provider.value)
+        api_key = keyring.get_password(cls.SERVICE_NAME, provider.value)
+        if not api_key:
+            raise APIKeyNotFoundError(provider)
+        return api_key
 
     @classmethod
     def delete_api_key(cls, provider: APIProvider) -> None:
