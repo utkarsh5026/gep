@@ -1,6 +1,6 @@
 from .manager import EmbeddingManager, EmbeddingProvider
 
-from .embedding import EmbeddingConfig, create_embedding_provider, EmbeddingProviderType, OpenAIEmbeddingProvider
+from .embedding import EmbeddingProviderConfig, create_embedding_provider, EmbeddingProviderType, OpenAIEmbeddingProvider
 
 
 from .vector import VectorStore, VectorStoreConfig, VectorStoreType, ChromaVectorStore, PGVectorStore, FAISSVectorStore, EmbeddingVector, SearchResult
@@ -13,7 +13,7 @@ from .utils import create_file_content_map
 __all__ = [
     "EmbeddingManager",
     "EmbeddingProvider",
-    "EmbeddingConfig",
+    "EmbeddingProviderConfig",
     "create_embedding_provider",
     "EmbeddingProviderType",
     "OpenAIEmbeddingProvider",
