@@ -14,6 +14,14 @@ class APIKeyCommand(BaseCommand):
                  op_type: Literal["add", "delete", "get"],
                  api_provider: str,
                  api_key: Optional[str] = None) -> None:
+        """Initialize the API key command
+
+        Args:
+            console (Console): The console to use
+            op_type (Literal["add", "delete", "get"]): The type of operation to perform
+            api_provider (str): The API provider to use (e.g. "openai")
+            api_key (Optional[str]): The API key to use
+        """
         super().__init__(console)
 
         try:
