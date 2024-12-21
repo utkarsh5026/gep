@@ -180,7 +180,7 @@ class AsyncFileWatcher:
             if event_type != EventType.FILE_DELETED and not event.is_directory:
                 try:
                     size = pathlib.Path(event.src_path).stat().st_size
-                except (OSError):
+                except OSError:
                     pass
             if event_type is not None:
                 file_event = FileEvent(
@@ -212,7 +212,8 @@ class AsyncFileWatcher:
         try:
 
             event_handler = AsyncEventHandler(
-                self.__handle_event, asyncio.get_running_loop())
+                callback=self.__handle_event,
+                loop=asyncio.get_running_loop())
             self.observer.schedule(
                 event_handler=event_handler,
                 path=str(self.root_path),
@@ -220,7 +221,7 @@ class AsyncFileWatcher:
             )
 
             self.observer.start()
-            asyncio.create_task(self.__process_buffer())
+            await asyncio.create_task(self.__process_buffer())
 
             logger.info("Watcher running successfully")
 

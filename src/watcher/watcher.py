@@ -19,6 +19,7 @@ class EventType(Enum):
     FILE_CREATED = auto()
     FILE_MODIFIED = auto()
     FILE_DELETED = auto()
+    FILE_MOVED = auto()
 
     def __str__(self):
         return self.name.replace('_', ' ').title()
