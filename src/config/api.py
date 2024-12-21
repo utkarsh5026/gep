@@ -31,3 +31,10 @@ class APIKeyManager:
     def delete_api_key(cls, provider: APIProvider) -> None:
         """Delete API key from system keyring"""
         keyring.delete_password(cls.SERVICE_NAME, provider.value)
+
+
+def verify_provider(name: str) -> APIProvider:
+    """Verify the provider is valid"""
+    if name.lower() in APIProvider.__members__.values():
+        return APIProvider(name.lower())
+    raise ValueError(f"Invalid provider: {name}")
