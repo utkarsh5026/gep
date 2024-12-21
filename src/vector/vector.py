@@ -85,6 +85,11 @@ class VectorStore(ABC):
         """Clear all vectors from the store."""
         pass
 
+    @abstractmethod
+    async def get_stats(self) -> dict[str, Any]:
+        """Get stats about the vector store."""
+        pass
+
 
 class ChromaVectorStore(VectorStore):
     """
