@@ -12,7 +12,7 @@ load_dotenv()
 
 
 async def main():
-    from src.vector import EmbeddingManager, OpenAIEmbeddingProvider, FAISSVectorStore, EmbeddingConfig, create_file_content_map
+    from src.vector import EmbeddingManager, OpenAIEmbeddingProvider, FAISSVectorStore, EmbeddingProviderConfig, create_file_content_map
     from src.query import QueryProcessor
     from src.prompt import PromptType, PromptProviderType
     from src.cmd import create_output_manager
@@ -21,7 +21,7 @@ async def main():
         root_dir=os.path.join("..", "src", "watcher"),
         accept_patterns=["*.py"])
 
-    config = EmbeddingConfig(model_name="text-embedding-3-small")
+    config = EmbeddingProviderConfig(model_name="text-embedding-3-small")
     embedding_provider = OpenAIEmbeddingProvider(config=config)
     vector_store = FAISSVectorStore(
         dimension=1536,
