@@ -1,10 +1,11 @@
-from rich.console import Console
-from rich.panel import Panel
 from typing import Literal, Optional
 
-from .base import BaseCommand
-from config import APIKeyManager, APIProvider, verify_provider
+from rich.console import Console
+from rich.panel import Panel
+
+from config import APIKeyManager, verify_provider
 from config.api import InvalidProviderError
+from .base import BaseCommand
 
 
 class APIKeyCommand(BaseCommand):
