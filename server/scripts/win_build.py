@@ -98,9 +98,11 @@ def create_executable():
     subprocess.run([
         pyinstaller_path,
         "--onefile",
+        "--console",
         "--clean",
         "--name", "gep",
         "--distpath", str(GEP_DIR),
+        "--paths", "../src",
         os.path.join("..", "src", "main.py")
     ], check=True)
 

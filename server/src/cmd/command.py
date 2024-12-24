@@ -18,23 +18,16 @@ click.rich_click.SHOW_ARGUMENTS = True
 click.rich_click.SHOW_METAVARS_COLUMN = True
 click.rich_click.SHOW_LINKS = True
 
-# Additional styling configurations
-# Groups arguments and options separately
 click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
-# Style for error suggestions
 click.rich_click.STYLE_ERRORS_SUGGESTION = "yellow italic"
-click.rich_click.STYLE_OPTIONS = "bold cyan"  # Style for option names
-click.rich_click.STYLE_ARGUMENTS = "bold green"  # Style for argument names
-click.rich_click.STYLE_COMMANDS = "bold blue"  # Style for command names
-click.rich_click.MAX_WIDTH = 100  # Maximum width of the help output
-# Show arguments in a separate panel
+click.rich_click.STYLE_OPTIONS = "bold cyan"
+click.rich_click.STYLE_ARGUMENTS = "bold green"
+click.rich_click.STYLE_COMMANDS = "bold blue"
+click.rich_click.MAX_WIDTH = 100
 click.rich_click.SHOW_ARGUMENTS_PANEL = True
-click.rich_click.ALIGN_OPTIONS_SWITCHES = True  # Align option switches
-# Custom title for options panel
+click.rich_click.ALIGN_OPTIONS_SWITCHES = True
 click.rich_click.OPTIONS_PANEL_TITLE = "💫 Options"
-# Custom title for arguments panel
 click.rich_click.ARGUMENTS_PANEL_TITLE = "📝 Arguments"
-# Custom title for commands panel
 click.rich_click.COMMANDS_PANEL_TITLE = "🚀 Commands"
 
 console = Console()
@@ -85,7 +78,7 @@ def load_project(root_path: str, config_path: str, api_provider: str, api_key: s
     """
     Load the project.
     """
-    ProjectManager.load_from_yaml(root_path, config_path)
+    ProjectManager.load_from_yaml(root_path)
 
 
 @cli.command(name='csc')
@@ -131,7 +124,7 @@ def embed():
     """
     Embed the project and store the embeddings in the vector store.
     """
-    EmbedCommand(console=console).run()
+    EmbedCommand(console).run()
 
 
 @cli.command(name='api-key')
@@ -142,7 +135,5 @@ def api_key(op_type: str, api_provider: str, api_key: str):
     """
     Manage API keys.
     """
-    APIKeyCommand(console=console,
-                  op_type=op_type,
-                  api_provider=api_provider,
-                  api_key=api_key).run()
+
+    APIKeyCommand(console, op_type, api_provider, api_key).run()

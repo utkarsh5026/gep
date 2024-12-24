@@ -1,4 +1,3 @@
-import asyncio
 from cmd.command import cli
 
 

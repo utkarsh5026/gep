@@ -10,9 +10,6 @@ from .manager import EmbeddingManager
 from watcher import AsyncFileWatcher, default_ignore_patterns, FileEvent, EventType
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 @dataclass
 class FileMetadata:
