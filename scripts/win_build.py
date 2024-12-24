@@ -132,6 +132,8 @@ def cleanup_resources():
 
 
 def main():
+
+    process_complete = False
     try:
         print("🚀 Starting build process...")
         try:
@@ -151,9 +153,13 @@ def main():
         create_executable()
 
         print("✅ Build completed successfully!")
-
+        process_complete = True
     finally:
         cleanup_resources()
+
+    if process_complete:
+        print("🎉 Build completed successfully!")
+        print("🚀 Executable created successfully! at ", GEP_DIR / "gep.exe")
 
 
 if __name__ == "__main__":
