@@ -2,7 +2,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
 
-
 from pyperclip import copy as copy_to_clipboard
 
 from .base import BaseCommand
@@ -38,11 +37,9 @@ class SampleConfigCommand(BaseCommand):
 
             copy_to_clipboard(yaml_content)
             self.console.print(
-            "[bold green]Sample configuration file copied to clipboard 😃[/bold green]")
-            
+                "[bold green]Sample configuration file copied to clipboard 😃[/bold green]")
+
         else:
             create_sample_config_file(self.config_path)
             self.console.print(
                 f"Sample configuration file created at {self.config_path}")
-
-        
