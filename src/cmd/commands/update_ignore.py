@@ -59,4 +59,4 @@ class UpdateIgnoreCommand(BaseCommand):
             ))
 
         except Exception as e:
-            self.error(e)
+            self.error("Error in printing the config file", e)
