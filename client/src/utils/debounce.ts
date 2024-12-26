@@ -1,22 +1,42 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Debounce a function
+ * Debounce a function, with proper async support
  * @param func - The function to debounce
  * @param delay - The delay in milliseconds
  * @returns The debounced function
  */
-function debounce<T extends (...args: unknown[]) => ReturnType<T>>(
+function debounce<T extends (...args: any[]) => any>(
   func: T,
   delay: number
-): T & { cancel: () => void } {
-  let timeoutId: NodeJS.Timeout;
-
+): ((...args: Parameters<T>) => Promise<ReturnType<T>>) & {
+  cancel: () => void;
+} {
+  let timeoutId: NodeJS.Timeout | undefined;
   const debouncedFunction = (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    return new Promise<ReturnType<T>>((resolve, reject) => {
+      timeoutId = setTimeout(async () => {
+        try {
+          const result = await func(...args);
+          resolve(result);
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      }, delay);
+    });
   };
 
-  debouncedFunction.cancel = () => clearTimeout(timeoutId);
-  return debouncedFunction as T & { cancel: () => void };
+  debouncedFunction.cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+  };
+
+  return debouncedFunction;
 }
 
 export default debounce;

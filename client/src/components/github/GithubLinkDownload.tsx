@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import api from "../../client/axios";
+import debounce from "../../utils/debounce";
 
 /**
  * Extracts owner and repository name from a GitHub URL.
@@ -37,13 +39,14 @@ const extractRepoInfo = (url: string) => {
  */
 const validateGithubRepo = async (url: string) => {
   const { owner, repo } = extractRepoInfo(url);
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
-
-  if (!response.ok) {
-    throw new Error("Repository not found or private");
-  }
-
-  return await response.json();
+  const gitUrl = `https://github.com/${owner}/${repo}`;
+  const response = await api.get("/github/check-git-url", {
+    params: {
+      url: gitUrl,
+    },
+  });
+  console.log(response.data);
+  return response.data;
 };
 
 const GithubLinkDownload: React.FC<{
@@ -52,23 +55,48 @@ const GithubLinkDownload: React.FC<{
   const [repoLink, setRepoLink] = useState(githubLink);
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isValid, setIsValid] = useState(false);
+
+  // Add the debounced validation function
+  const debouncedValidation = useCallback((url: string) => {
+    return debounce(async (url: string) => {
+      if (!url) {
+        setError("");
+        setIsValid(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError("");
+
+      try {
+        await validateGithubRepo(url);
+        setIsValid(true);
+        setError("");
+      } catch (err) {
+        setIsValid(false);
+        setError(err instanceof Error ? err.message : "Invalid repository URL");
+      } finally {
+        setIsLoading(false);
+      }
+    }, 500)(url);
+  }, []);
+
+  // Update the onChange handler
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setRepoLink(newValue);
+    setIsValid(false);
+    debouncedValidation(newValue);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    try {
-      await validateGithubRepo(repoLink);
-      // TODO: Handle the submission
-      console.log("Repository validated successfully:", repoLink);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to validate repository"
-      );
-    } finally {
-      setIsLoading(false);
+    if (!isValid) {
+      setError("Please enter a valid repository URL");
+      return;
     }
+    console.log("Repository validated successfully:", repoLink);
   };
 
   return (
@@ -86,11 +114,15 @@ const GithubLinkDownload: React.FC<{
             type="url"
             className="w-full dark:bg-gray-800 text-black dark:text-white"
             value={repoLink}
-            onChange={(e) => setRepoLink(e.target.value)}
+            onChange={handleInputChange}
             placeholder="https://github.com/username/repository"
             required
           />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error ? (
+            <p className="text-red-500 text-sm">{error}</p>
+          ) : isValid ? (
+            <p className="text-green-500 text-sm">Repository is valid!</p>
+          ) : null}
         </div>
 
         <Button type="submit" disabled={isLoading}>
