@@ -1,18 +1,47 @@
-from typing import Optional, Any
-from pydantic import BaseModel
+from typing import Optional, Any, ClassVar
+from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from pathlib import Path
 
 from vector import EmbeddingProviderType, VectorStoreType
 from query import LLMType
 
 
+class ConfigError(Exception):
+    """Base exception for configuration errors"""
+    pass
+
+
+class ConfigValidationError(ConfigError):
+    """Raised when configuration validation fails"""
+    pass
+
+
 class EmbeddingConfig(BaseModel):
     """Configuration for embeddings"""
+
+    DEFAULT_BATCH_SIZE: ClassVar[int] = 100
+    DEFAULT_DIMENSION: ClassVar[int] = 1536
+    MIN_BATCH_SIZE: ClassVar[int] = 1
+    MAX_BATCH_SIZE: ClassVar[int] = 2048
+
     embedding_type: EmbeddingProviderType
     model_name: str
-    batch_size: int = 100
-    dimension: int = 1536
+    batch_size: int = Field(default=DEFAULT_BATCH_SIZE,
+                            ge=MIN_BATCH_SIZE, le=MAX_BATCH_SIZE)
+    dimension: int = Field(default=DEFAULT_DIMENSION, ge=0)
     additional_params: Optional[dict[str, Any]] = None
+
+    @field_validator('model_name', mode='after')
+    @classmethod
+    def validate_model_name(cls, v: str, values: ValidationInfo) -> str:
+        v = v.strip()
+        embedding_type = values.data.get('embedding_type')
+
+        if embedding_type == EmbeddingProviderType.OPENAI:
+            if not v.startswith('text-embedding-'):
+                raise ConfigValidationError(
+                    "OpenAI embedding model must start with 'text-embedding-'")
+        return v
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
@@ -27,15 +56,44 @@ class EmbeddingConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    """Configuration for LLM"""
+    """Configuration for Language Model (LLM) settings.
+
+    Attributes:
+        llm_type: Type of LLM provider (e.g., OpenAI, HuggingFace)
+        model_name: Specific model identifier
+        temperature: Controls output randomness (0.0=deterministic, 2.0=most random)
+        max_tokens: Maximum length of generated response (None=model's max)
+        top_p: Nucleus sampling threshold for output diversity
+        frequency_penalty: Reduces word repetition (-2.0 to 2.0)
+        presence_penalty: Encourages topic diversity (-2.0 to 2.0)
+        additional_params: Provider-specific parameters
+    """
     llm_type: LLMType
     model_name: str
-    temperature: float = 0.7
-    max_tokens: Optional[int] = None
-    top_p: float = 1.0
-    frequency_penalty: float = 0.0
-    presence_penalty: float = 0.0
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    max_tokens: Optional[int] = Field(default=None, ge=0)
+    top_p: float = Field(default=1.0, ge=0.0, le=1.0)
+    frequency_penalty: float = Field(default=0.0, ge=-2.0, le=2.0)
+    presence_penalty: float = Field(default=0.0, ge=-2.0, le=2.0)
     additional_params: Optional[dict[str, Any]] = None
+
+    @field_validator('model_name')
+    @classmethod
+    def validate_model_name(cls, v: str, info: ValidationInfo) -> str:
+        """Validates model name based on provider requirements."""
+        v = v.strip()
+        llm_type = info.data.get('llm_type')
+
+        if llm_type == LLMType.OPENAI:
+            valid_prefixes = ('gpt-4', 'gpt-3.5')
+            if not any(v.startswith(prefix) for prefix in valid_prefixes):
+                raise ConfigValidationError(
+                    f"OpenAI model must start with one of: {', '.join(valid_prefixes)}")
+        elif llm_type == LLMType.CLAUDE:
+            if not v.startswith('claude-'):
+                raise ConfigValidationError(
+                    "Anthropic model must start with 'claude-'")
+        return v
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
@@ -53,10 +111,20 @@ class LLMConfig(BaseModel):
 
 class VectorConfig(BaseModel):
     """Configuration for vector store"""
-    store_type: VectorStoreType
+    store_type: VectorStoreType = Field(default=VectorStoreType.FAISS)
     persist_dir: Path
-    dimension: int = 1536
-    additional_params: Optional[dict[str, Any]] = None
+    dimension: int = Field(default=1536, ge=0)
+    additional_params: Optional[dict[str, Any]] = Field(default_factory=dict)
+
+    @field_validator('persist_dir')
+    @classmethod
+    def validate_persist_dir(cls, v: Path):
+        v = v.resolve()
+        try:
+            v.parent.mkdir(parents=True, exist_ok=True)
+            return v
+        except Exception as e:
+            raise ConfigValidationError(f"Invalid persist directory: {e}")
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
@@ -116,7 +184,7 @@ embedding_config:
   # Processing batch size for embeddings (optional)
   # Larger values process more text at once but use more memory
   # Default: 100
-  batch_size: 100
+  batch_size: 100 
   
   # Vector dimension (required)
   # Must match the output dimension of your chosen embedding model
