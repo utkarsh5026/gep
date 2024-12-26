@@ -1,6 +1,9 @@
 import os
 import shutil
 import subprocess
+import asyncio
+import sys
+
 
 from pathlib import Path
 from pydantic import BaseModel
@@ -138,3 +141,66 @@ def _handle_remove_readonly(func, path, exc):
                        path}, will try to remove readonly")
         os.chmod(path, stat.S_IWRITE)
         func(path)
+
+
+def repo_from_url(url: str) -> str:
+    """
+    Get the repository name from the URL
+    """
+    return url.split("/")[-1].split(".")[0]
+
+
+async def arun_command(command: list[str], check: bool = True) -> CommandResult:
+    """
+    Run a shell command asynchronously with proper logging and error handling
+
+    Args:
+        command: List of command components to execute
+        check: Whether to raise an exception on command failure
+
+    Returns:
+        Process: Result of the command
+
+    Raises:
+        subprocess.SubprocessError: If the command fails and check=True
+    """
+    try:
+        # Windows-specific settings
+        if sys.platform == 'win32':
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW,  # Prevents console window popup
+            )
+        else:
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+
+        stdout_bytes, stderr_bytes = await process.communicate()
+
+        if check and process.returncode != 0:
+            raise subprocess.SubprocessError(
+                f"Command failed with return code {process.returncode}"
+            )
+
+        return CommandResult(
+            return_code=process.returncode,
+            stdout=stdout_bytes.decode(),
+            stderr=stderr_bytes.decode()
+        )
+
+    except asyncio.CancelledError:
+        if 'process' in locals():
+            process.terminate()
+            try:
+                await process.wait()
+            except asyncio.CancelledError:
+                process.kill()
+        raise
+
+    except Exception as e:
+        raise GitCommandError(" ".join(command)) from e
