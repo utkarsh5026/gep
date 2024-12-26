@@ -49,6 +49,15 @@ const validateGithubRepo = async (url: string) => {
   return response.data;
 };
 
+const downloadGitRepo = async (url: string) => {
+  const response = await api.get("/github/download-github-repo", {
+    params: {
+      url: url,
+    },
+  });
+  return response.data;
+};
+
 const GithubLinkDownload: React.FC<{
   githubLink: string;
 }> = ({ githubLink }) => {
@@ -57,7 +66,6 @@ const GithubLinkDownload: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [isValid, setIsValid] = useState(false);
 
-  // Add the debounced validation function
   const debouncedValidation = useCallback((url: string) => {
     return debounce(async (url: string) => {
       if (!url) {
@@ -92,11 +100,11 @@ const GithubLinkDownload: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) {
-      setError("Please enter a valid repository URL");
-      return;
+    if (!isValid) setError("Please enter a valid repository URL");
+    if (isValid) {
+      const data = await downloadGitRepo(repoLink);
+      console.log(data);
     }
-    console.log("Repository validated successfully:", repoLink);
   };
 
   return (
