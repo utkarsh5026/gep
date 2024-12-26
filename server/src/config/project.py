@@ -7,6 +7,34 @@ from .configs import ProjectConfig, create_sample_config_file, create_config_dic
 
 
 class ProjectManager:
+    """
+    Manages project configuration, initialization, and settings for the AI-powered grep tool.
+
+    This class handles:
+    - Project initialization and configuration management
+    - API key management for different providers
+    - Gitignore pattern collection and management
+    - Vector store directory management for embeddings
+
+    Attributes:
+        AIGREP_DIR_NAME (str): Name of the directory storing project configuration ('.gep')
+        CONFIG_FILE_NAME (str): Name of the configuration file ('config.yaml')
+        VECTOR_STORE_DIR_NAME (str): Name of the directory storing vector embeddings ('vectorstore')
+        root_dir (Path): Root directory of the project
+        aigrep_dir (Path): Path to the .gep directory
+        config_file (Path): Path to the config.yaml file
+        vector_store_dir (Path): Path to the vector store directory
+
+    Example:
+        ```python
+        # Initialize a new project
+        manager = ProjectManager(Path("/path/to/project"))
+        manager.init(api_provider=APIProvider.OPENAI, api_key="sk-...")
+
+        # Load existing project configuration
+        config = manager.load()
+        ```
+    """
     AIGREP_DIR_NAME = '.gep'
     CONFIG_FILE_NAME = 'config.yaml'
     VECTOR_STORE_DIR_NAME = 'vectorstore'
