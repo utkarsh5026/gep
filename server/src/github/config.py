@@ -17,7 +17,7 @@ class GitConfig:
         self.git_path = check_git_available()
         self.repo_path = Path.home() / ".gep" / "repos"
 
-    def check_git_url(self, url: str) -> bool:
+    async def check_git_url(self, url: str) -> bool:
         return check_git_url(url)
 
     @retry(stop=stop_after_attempt(3),
@@ -26,8 +26,7 @@ class GitConfig:
         """
         Download a github repository with automatic retries
         """
-        # Check if URL is valid first
-        if not self.check_git_url(url):
+        if not check_git_url(url):
             raise ValueError(f"Invalid git URL: {url}")
 
         repo_name = url.rstrip('/').split('/')[-1].replace('.git', '')
@@ -94,10 +93,3 @@ class GitConfig:
 
         except Exception as e:
             raise GitCommandError(" ".join(command)) from e
-
-    def _handle_remove_readonly(self, func, path):
-        """Handler for removing read-only files"""
-        import stat
-        if func in (os.rmdir, os.remove, os.unlink):
-            os.chmod(path, stat.S_IWRITE)
-            func(path)

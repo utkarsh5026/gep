@@ -1,19 +1,11 @@
 import os
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+import uvicorn
 
 
 def main():
-    import uvicorn
-    logger.info("Starting the FastAPI server...")
+
+    # Configure uvicorn loggers to use our logger
+    # logging.getLogger("uvicorn").handlers = logger.handlers
 
     uvicorn_config = {
         "app": "web:fastapi_app",
@@ -21,7 +13,8 @@ def main():
         "port": 8000,
         "log_level": "info",
         "reload": os.environ.get("ENV") != "prod",
-        "log_config": None
+        "log_config": None,
+        # "access_log": True
     }
 
     uvicorn.run(**uvicorn_config)

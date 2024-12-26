@@ -2,10 +2,8 @@ from github import git_config
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from starlette.status import HTTP_404_NOT_FOUND
+from logger import logger
 
-import logging
-
-logger = logging.getLogger()
 
 router = APIRouter(prefix="/github")
 
@@ -14,8 +12,9 @@ router = APIRouter(prefix="/github")
             summary="Check if the git URL is valid",
             description="Check if the git URL is valid for a github repository")
 async def check_git_url(url: str):
-    result = git_config.check_git_url(url)
+    result = await git_config.check_git_url(url)
     if result:
+        logger.info(f"Git URL is valid: {url}")
         return Response(status_code=200)
     else:
         raise HTTPException(
