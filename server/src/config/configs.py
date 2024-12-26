@@ -157,6 +157,26 @@ class ProjectConfig(BaseModel):
             ignore_patterns=data.get('ignore_patterns', [])
         )
 
+    @field_validator('root_dir')
+    @classmethod
+    def validate_root_dir(cls, v: Path) -> Path:
+        v = v.resolve()
+        if not v.exists():
+            raise ConfigValidationError(f"Root directory does not exist: {v}")
+        if not v.is_dir():
+            raise ConfigValidationError(f"Root path is not a directory: {v}")
+        return v
+
+    @field_validator("vector_config")
+    @classmethod
+    def validate_dimensions(cls, v: VectorConfig, info: ValidationInfo) -> VectorConfig:
+        emb_config = info.data.get("emb_config")
+        print(emb_config.dimension, v.dimension)
+        if emb_config and v.dimension != emb_config.dimension:
+            raise ConfigValidationError("Vector dimension must match embedding dimension")
+
+        return v
+
 
 def sample_config() -> str:
     """Creates a sample YAML configuration with detailed descriptions for all parameters"""

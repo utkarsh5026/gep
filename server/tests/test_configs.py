@@ -130,3 +130,39 @@ class TestProjectConfig:
         assert isinstance(config.llm_config, LLMConfig)
         assert isinstance(config.vector_config, VectorConfig)
         assert config.ignore_patterns == ['*.pyc', '__pycache__']
+
+    def test_invalid_root_dir(self, valid_embedding_config, valid_llm_config, valid_vector_config):
+        config_dict = {
+            'root_dir': '/path/that/does/not/exist',
+            'embedding_config': valid_embedding_config,
+            'llm_config': valid_llm_config,
+            'vector_config': valid_vector_config,
+        }
+        with pytest.raises(ConfigValidationError, match="Root directory does not exist"):
+            ProjectConfig.from_dict(config_dict)
+
+    def test_root_dir_is_file(self, tmp_path, valid_embedding_config, valid_llm_config, valid_vector_config):
+        file_path = tmp_path / "test_file"
+        file_path.touch()
+
+        config_dict = {
+            'root_dir': str(file_path),
+            'embedding_config': valid_embedding_config,
+            'llm_config': valid_llm_config,
+            'vector_config': valid_vector_config,
+        }
+        with pytest.raises(ConfigValidationError, match="Root path is not a directory"):
+            ProjectConfig.from_dict(config_dict)
+
+    def test_dimension_mismatch(self, tmp_path, valid_embedding_config, valid_llm_config, valid_vector_config):
+        # Modify vector dimension to mismatch embedding dimension
+        valid_vector_config['dimension'] = 768  # Different from embedding dimension (1536)
+
+        config_dict = {
+            'root_dir': str(tmp_path),
+            'embedding_config': valid_embedding_config,
+            'llm_config': valid_llm_config,
+            'vector_config': valid_vector_config,
+        }
+        with pytest.raises(ConfigValidationError, match="Vector dimension must match embedding dimension"):
+            ProjectConfig.from_dict(config_dict)
