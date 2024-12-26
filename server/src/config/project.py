@@ -3,9 +3,7 @@ from typing import Optional
 from pathlib import Path
 
 from .api import APIProvider, APIKeyManager
-from .configs import ProjectConfig, EmbeddingConfig, LLMConfig, create_sample_config_file, sample_config, create_config_dict
-from vector import EmbeddingProviderType
-from query import LLMType
+from .configs import ProjectConfig, create_sample_config_file, create_config_dict
 
 
 class ProjectManager:
