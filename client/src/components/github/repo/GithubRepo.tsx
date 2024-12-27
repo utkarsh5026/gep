@@ -1,21 +1,19 @@
-import React, { useEffect} from "react";
+import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import useRepo from "../../../store/hooks/repo.ts";
 import RepoModal from "./RepoModal";
-
 
 const GithubRepo: React.FC = () => {
   const { fetchRepo, root } = useRepo();
   const [searchParams] = useSearchParams();
   const repoUrl = searchParams.get("url");
 
-
   useEffect(() => {
     if (!repoUrl) {
       return;
     }
     fetchRepo(repoUrl);
-  }, [repoUrl]);
+  }, [repoUrl, fetchRepo]);
 
   if (!repoUrl) {
     return <div>No repository URL provided</div>;
@@ -27,11 +25,7 @@ const GithubRepo: React.FC = () => {
   console.log(root);
   return (
     <div>
-      <RepoModal
-        isOpen={true}
-        onClose={() => {}}
-        repoStructure={root}
-      />
+      <RepoModal isOpen={true} onClose={() => {}} />
     </div>
   );
 };

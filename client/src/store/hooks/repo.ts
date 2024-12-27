@@ -9,11 +9,14 @@ interface RepoState {
   root: FileNode | null;
   loading: boolean;
   error: string | null;
+  fileMap: Record<string, FileNode>;
   fetchRepo: (url: string) => void;
 }
 
 const useRepo = (): RepoState => {
-  const { root, loading, error } = useAppSelector((state) => state.repo);
+  const { root, loading, error, fileMap } = useAppSelector(
+    (state) => state.repo
+  );
   const dispatch = useAppDispatch();
 
   const fetchRepo = useCallback(
@@ -22,7 +25,9 @@ const useRepo = (): RepoState => {
     },
     [dispatch]
   );
-  return { root, loading, error, fetchRepo };
+
+  console.dir(fileMap, { depth: null });
+  return { root, loading, error, fileMap, fetchRepo };
 };
 
 export default useRepo;

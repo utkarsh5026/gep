@@ -1,14 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
 import type { FileNode } from "../../../store/slices/repo";
 
 interface DirectoryTreeProps {
   node: FileNode;
   level?: number;
+  initialOpenPaths?: string[];
+  selectedPath?: string | null;
+  currentPath?: string;
 }
 
-const DirectoryTree: React.FC<DirectoryTreeProps> = ({ node, level = 0 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const DirectoryTree: React.FC<DirectoryTreeProps> = ({
+  node,
+  level = 0,
+  initialOpenPaths = [],
+  selectedPath = null,
+  currentPath = "",
+}) => {
+  const fullPath = currentPath ? `${currentPath}/${node.name}` : node.name;
+  const [isOpen, setIsOpen] = useState(
+    initialOpenPaths.includes(fullPath) ||
+      (selectedPath?.startsWith(fullPath + "/") ?? false)
+  );
+  const isSelected = selectedPath === fullPath;
+
+  const itemRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Open parent directories when selectedPath changes
+    if (selectedPath?.startsWith(fullPath + "/") || selectedPath === fullPath) {
+      setIsOpen(true);
+    }
+  }, [selectedPath, fullPath]);
+
+  useEffect(() => {
+    if (isSelected && itemRef.current) {
+      setTimeout(() => {
+        itemRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [isSelected, selectedPath]);
 
   const handleClick = () => {
     if (node.type === "directory") {
@@ -17,10 +51,11 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({ node, level = 0 }) => {
   };
 
   return (
-    <div className="select-none mx-4">
+    <div className="select-none mx-4" ref={itemRef}>
       <button
         type="button"
-        className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1 w-full text-left"
+        className={`flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1 w-full text-left
+          ${isSelected ? "bg-blue-100 dark:bg-blue-900" : ""}`}
         onClick={handleClick}
       >
         {node.type === "directory" ? (
@@ -43,6 +78,9 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({ node, level = 0 }) => {
             key={`${node.name}-${index}`}
             node={child}
             level={level + 1}
+            initialOpenPaths={initialOpenPaths}
+            selectedPath={selectedPath}
+            currentPath={fullPath}
           />
         ))}
     </div>
