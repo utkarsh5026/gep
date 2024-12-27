@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { FileNode } from "../../../store/slices/repo.ts";
+import { getFileIcon } from "./fileIcons";
 
 interface DirectoryTreeProps {
   node: FileNode;
@@ -54,19 +55,19 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({
     <div className="select-none mx-4" ref={itemRef}>
       <button
         type="button"
-        className={`flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1 w-full text-left
+        className={`flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded px-2 py-1 w-full text-left
           ${isSelected ? "bg-blue-100 dark:bg-blue-900" : ""}`}
         onClick={handleClick}
       >
         {node.type === "directory" ? (
           <>
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            <Folder size={16} className="text-blue-500" />
+            {getFileIcon(node.name, true)}
           </>
         ) : (
           <>
-            <span className="w-4" /> {/* Spacing for alignment */}
-            <File size={16} className="text-gray-500" />
+            <span className="w-4" />
+            {getFileIcon(node.name)}
           </>
         )}
         <span>{node.name}</span>

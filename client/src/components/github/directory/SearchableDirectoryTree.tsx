@@ -28,7 +28,7 @@ const SearchableDirectoryTree: React.FC = () => {
   console.dir(selectedPath, { depth: null });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full overflow-auto scrollbar-hide p-4">
       <div className="sticky top-0 z-20 pt-4 pb-2 bg-white dark:bg-gray-900">
         <div className="relative">
           <input
