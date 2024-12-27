@@ -10,6 +10,10 @@ export default {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      sans: ['"Roboto Mono"', "monospace"],
+      mono: ['"Roboto Mono"', "monospace"],
+    },
     extend: {
       keyframes: {
         "accordion-down": {
@@ -79,9 +83,6 @@ export default {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
-      },
-      fontFamily: {
-        "roboto-mono": ['"Roboto Mono"', "monospace"],
       },
     },
   },
