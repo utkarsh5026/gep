@@ -1,25 +1,66 @@
 import os
-
+from typing import Literal, Optional
 from pathlib import Path
 from pathspec import PathSpec
 from pathspec.patterns import GitWildMatchPattern
 
+from pydantic import BaseModel
+
 from logger import logger
 
 
-def _read_gitignore(directory: Path):
+class FileNode(BaseModel):
     """
-    Read all .gitignore files in the directory tree and combine their rules.
-    Returns a PathSpec object that can be used to match files.
+    Represents a node in a file system tree structure.
+
+    Attributes:
+        name (str): Name of the file or directory
+        type (Literal["file", "directory"]): Type of the node
+        children (Optional[list[FileNode]]): List of child nodes for directories, None for files
     """
-    gitignore_patterns = []
+    name: str
+    type: Literal["file", "directory"]
+    children: Optional[list["FileNode"]] = None
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "name": "src",
+                    "type": "directory",
+                    "children": [
+                            {"name": "main.py", "type": "file"}
+                    ]
+                }
+            ]
+        }
+    }
+
+
+def _read_gitignore(directory: Path) -> PathSpec:
+    """
+    Read and combine all .gitignore files in the directory tree.
+
+    Args:
+        directory (Path): Root directory to start searching for .gitignore files
+
+    Returns:
+        PathSpec: A compiled PathSpec object containing all gitignore patterns
+
+    Note:
+        Always includes '.git/' in the ignore patterns regardless of .gitignore contents
+    """
+    gitignore_patterns = ['.git/']  # Always ignore .git directory
 
     # Walk through directory to find all .gitignore files
-    for root, _, files in os.walk(str(directory)):
+    for root, dirs, files in os.walk(str(directory)):
+        # Skip .git directory
+        if '.git' in dirs:
+            dirs.remove('.git')
+
         if '.gitignore' in files:
             gitignore_path = os.path.join(root, '.gitignore')
             with open(gitignore_path, 'r') as f:
-                # Read patterns and filter out empty lines and comments
                 patterns = [line.strip() for line in f.readlines()]
                 patterns = [p for p in patterns if p and not p.startswith('#')]
                 gitignore_patterns.extend(patterns)
@@ -27,11 +68,19 @@ def _read_gitignore(directory: Path):
     return PathSpec.from_lines(GitWildMatchPattern, gitignore_patterns)
 
 
-def list_files_recursively(directory: Path):
+def list_files_recursively(directory: Path) -> list[str]:
     """
-    Recursively list all files in the given directory and its subdirectories,
-    respecting .gitignore rules.
-    Returns a list of file paths relative to the given directory.
+    Recursively list all files in a directory while respecting .gitignore rules.
+
+    Args:
+        directory (Path): Root directory to start the file search
+
+    Returns:
+        list[str]: Sorted list of file paths relative to the root directory
+
+    Example:
+        >>> list_files_recursively(Path("project/"))
+        ['src/main.py', 'tests/test_main.py']
     """
     # First, read all gitignore rules
     gitignore_spec = _read_gitignore(directory)
@@ -54,3 +103,58 @@ def list_files_recursively(directory: Path):
 
     logger.info(f"Found {len(file_list)} files in {directory}")
     return sorted(file_list)
+
+
+def create_file_tree(file_paths: list[str]) -> FileNode:
+    """
+    Create a hierarchical file tree structure from a list of file paths.
+
+    Args:
+        file_paths (list[str]): List of file paths to organize into a tree
+
+    Returns:
+        FileNode: Root node of the created file tree
+
+    Example:
+        >>> paths = ['src/main.py', 'src/utils/helper.py']
+        >>> tree = create_file_tree(paths)
+        >>> tree.children[0].name  # Returns 'src'
+    """
+    def insert_tree_node(parent_node: FileNode, node_name: str, is_leaf: bool) -> FileNode:
+        """
+        Insert a new node into the tree or return existing node if found.
+
+        Args:
+            parent_node (FileNode): Node to insert under
+            node_name (str): Name of the new node
+            is_leaf (bool): True if node represents a file, False for directory
+
+        Returns:
+            FileNode: The inserted or existing node
+        """
+        existing_children = parent_node.children or []
+        for existing_node in existing_children:
+            if existing_node.name == node_name:
+                return existing_node
+
+        new_node = FileNode(
+            name=node_name,
+            type="file" if is_leaf else "directory",
+            children=[] if not is_leaf else None
+        )
+        existing_children.append(new_node)
+        parent_node.children = existing_children
+        return new_node
+
+    root_node = FileNode(name="", type="directory", children=[])
+    for file_path in file_paths:
+        current_node = root_node
+        path_segments = Path(file_path).parts
+        for position, segment in enumerate(path_segments):
+            current_node = insert_tree_node(
+                current_node,
+                segment,
+                is_leaf=(position == len(path_segments) - 1)
+            )
+
+    return root_node

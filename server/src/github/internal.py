@@ -1,3 +1,5 @@
+# internal.py - internal functions for github module
+
 import os
 import shutil
 import subprocess
@@ -9,6 +11,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from logger import logger
+from .file import list_files_recursively, create_file_tree, FileNode
 
 
 class GitNotInstalledError(Exception):
@@ -28,6 +31,11 @@ class CommandResult(BaseModel):
     return_code: int
     stdout: str
     stderr: str
+
+
+class RepoInfo(BaseModel):
+    commit_diff: dict
+    files: FileNode
 
 
 def check_git_available():
@@ -70,6 +78,7 @@ def run_command(command: list[str], check: bool = True) -> CommandResult:
             subprocess.SubprocessError: If the command fails and check=True
     """
     try:
+        logger.info(f"Running command: {' '.join(command)}")
         result = subprocess.run(
             command,
             check=check,
@@ -103,10 +112,11 @@ def check_git_url(url: str) -> bool:
     logger.info(f"Checking git URL: {url}")
 
     try:
-        result = run_command(["git", "ls-remote", url])
+        cmd = _args("git", "ls-remote", url)
+        result = run_command(cmd)
         return result.return_code == 0
     except Exception as e:
-        print(f"Error checking git URL: {e}")
+        logger.error(f"Error checking git URL: {e}")
         return False
 
 
@@ -153,44 +163,43 @@ def repo_from_url(url: str) -> str:
 async def arun_command(command: list[str], check: bool = True) -> CommandResult:
     """
     Run a shell command asynchronously with proper logging and error handling
-
-    Args:
-        command: List of command components to execute
-        check: Whether to raise an exception on command failure
-
-    Returns:
-        Process: Result of the command
-
-    Raises:
-        subprocess.SubprocessError: If the command fails and check=True
     """
     try:
-        # Windows-specific settings
-        if sys.platform == 'win32':
-            process = await asyncio.create_subprocess_exec(
-                *command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                creationflags=subprocess.CREATE_NO_WINDOW,  # Prevents console window popup
-            )
-        else:
-            process = await asyncio.create_subprocess_exec(
-                *command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+        # Fallback to synchronous execution if async fails
+        try:
+            if sys.platform == 'win32':
+                process = await asyncio.create_subprocess_exec(
+                    *command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+            else:
+                process = await asyncio.create_subprocess_exec(
+                    *command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            stdout_bytes, stderr_bytes = await process.communicate()
+            return_code = process.returncode
 
-        stdout_bytes, stderr_bytes = await process.communicate()
+        except NotImplementedError:
+            logger.warning(
+                "Async execution not supported, falling back to synchronous execution")
+            return run_command(command)
 
-        if check and process.returncode != 0:
+        if check and return_code != 0:
             raise subprocess.SubprocessError(
-                f"Command failed with return code {process.returncode}"
+                f"Command failed with return code {return_code}"
             )
+
+        stdout = stdout_bytes.decode() if stdout_bytes else ""
+        stderr = stderr_bytes.decode() if stderr_bytes else ""
 
         return CommandResult(
-            return_code=process.returncode,
-            stdout=stdout_bytes.decode(),
-            stderr=stderr_bytes.decode()
+            return_code=return_code,
+            stdout=stdout,
+            stderr=stderr
         )
 
     except asyncio.CancelledError:
@@ -203,4 +212,76 @@ async def arun_command(command: list[str], check: bool = True) -> CommandResult:
         raise
 
     except Exception as e:
-        raise GitCommandError(" ".join(command)) from e
+        logger.error(f"Error running command: {e}")
+        raise e
+
+
+async def load_repo(repo_path: Path) -> RepoInfo:
+    """
+    Load a repository
+    """
+    if not repo_path.exists():
+        raise FileNotFoundError(f"Repository not found: {repo_path}")
+
+    if not repo_path.is_dir():
+        raise NotADirectoryError(f"Not a directory: {repo_path}")
+
+    commit_diff = await _get_commit_difference(repo_path)
+    files = create_file_tree(list_files_recursively(directory=repo_path))
+
+    return RepoInfo(
+        commit_diff=commit_diff,
+        files=files
+    )
+
+
+async def _get_commit_difference(repo_path: Path) -> dict:
+    """
+    Get detailed information about how many commits ahead/behind the local repository is
+
+    Args:
+        repo_path: Path to the git repository
+
+    Returns:
+        dict containing:
+            - needs_pull (bool): Whether the repo needs to be pulled
+            - commits_behind (int): Number of commits behind remote
+            - commits_ahead (int): Number of commits ahead of remote
+            - current_branch (str): Name of the current branch
+    """
+    try:
+        # Get the current branch name
+        branch_result = await arun_command([
+            "git", "-C", str(repo_path),
+            "rev-parse", "--abbrev-ref", "HEAD"
+        ])
+        current_branch = branch_result.stdout.strip()
+
+        # Get the commit difference
+        diff_result = await arun_command([
+            "git", "-C", str(repo_path),
+            "rev-list", "--left-right", "--count",
+            f"{current_branch}...origin/{current_branch}"
+        ])
+
+        ahead, behind = map(int, diff_result.stdout.strip().split('\t'))
+
+        return {
+            "needs_pull": behind > 0,
+            "commits_behind": behind,
+            "commits_ahead": ahead,
+            "current_branch": current_branch
+        }
+
+    except GitCommandError as e:
+        logger.error(f"Error getting commit difference: {e}")
+        return {
+            "needs_pull": False,
+            "commits_behind": 0,
+            "commits_ahead": 0,
+            "current_branch": "unknown"
+        }
+
+
+def _args(*args) -> list[str]:
+    return [str(arg) for arg in args]
