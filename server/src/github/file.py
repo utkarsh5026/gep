@@ -146,7 +146,19 @@ def create_file_tree(file_paths: list[str]) -> FileNode:
         parent_node.children = existing_children
         return new_node
 
-    root_node = FileNode(name="", type="directory", children=[])
+    def sort_tree(node: FileNode):
+        """
+        Recursively sort the tree with directories first, then files, alphabetically.
+        """
+        if node.children:
+            # Sort children
+            node.children.sort(key=lambda x: (
+                x.type == "file", x.name.lower()))
+            # Recursively sort each child's children
+            for child in node.children:
+                sort_tree(child)
+
+    root_node = FileNode(name="project", type="directory", children=[])
     for file_path in file_paths:
         current_node = root_node
         path_segments = Path(file_path).parts
@@ -157,4 +169,6 @@ def create_file_tree(file_paths: list[str]) -> FileNode:
                 is_leaf=(position == len(path_segments) - 1)
             )
 
+    # Sort the entire tree after creation
+    sort_tree(root_node)
     return root_node
