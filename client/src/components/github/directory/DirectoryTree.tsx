@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
-import type { FileNode } from "../../../store/slices/repo";
+import type { FileNode } from "../../../store/slices/repo.ts";
 
 interface DirectoryTreeProps {
   node: FileNode;

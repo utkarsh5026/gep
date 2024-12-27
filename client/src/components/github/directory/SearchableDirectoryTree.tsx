@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import DirectoryTree from "./DirectoryTree";
-import useRepo from "../../../store/hooks/repo";
+import DirectoryTree from "./DirectoryTree.tsx";
+import useRepo from "../../../store/hooks/repo.ts";
 
 // Generate array of parent paths that need to be opened
 const getParentPaths = (path: string): string[] => {
