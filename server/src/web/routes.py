@@ -37,3 +37,11 @@ async def load_repo(url: str):
     logger.info(f"Loading repository: {url}")
     result = await git_manager.load_repo(url)
     return result
+
+
+@router.get("/file-content",
+            summary="Get the content of a file",
+            description="Get the content of a file")
+async def get_file_content(repo_link: str, file_path: str):
+    result = await git_manager.get_file_content(repo_link, file_path)
+    return result
