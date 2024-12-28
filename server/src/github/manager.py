@@ -87,7 +87,7 @@ class GitManager:
         full_path = target_path / file_path
 
         try:
-            async with aiofiles.open(full_path, mode='r') as file:
+            async with aiofiles.open(full_path, mode='r', encoding='utf-8') as file:
                 content = await file.read()
                 return content
         except FileNotFoundError:
