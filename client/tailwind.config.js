@@ -12,7 +12,17 @@ export default {
     },
     fontFamily: {
       sans: ['"Roboto Mono"', "monospace"],
-      mono: ['"Roboto Mono"', "monospace"],
+      mono: [
+        "Cascadia Code",
+        "ui-monospace",
+        "SFMono-Regular",
+        "Menlo",
+        "Monaco",
+        "Consolas",
+        "Liberation Mono",
+        "Courier New",
+        "monospace",
+      ],
     },
     extend: {
       keyframes: {
