@@ -12,7 +12,10 @@ export const fetchRepoStructure = createAsyncThunk(
   async (url: string, { rejectWithValue }) => {
     try {
       const response = await api.get(`/github/load-repo?url=${url}`);
-      return response.data;
+      return {
+        repo: response.data,
+        repoLink: url,
+      };
     } catch (error) {
       if (axios.isAxiosError(error)) {
         return rejectWithValue(error.response?.data || error.message);
@@ -52,6 +55,7 @@ interface RepoState {
   loading: boolean;
   error: string | null;
   fileMap: Record<string, FileNode>;
+  repoLink: string | null;
 }
 
 const initialState: RepoState = {
@@ -59,6 +63,7 @@ const initialState: RepoState = {
   loading: false,
   error: null,
   fileMap: {},
+  repoLink: null,
 };
 
 const repoSlice = createSlice({
@@ -73,10 +78,11 @@ const repoSlice = createSlice({
       })
       .addCase(fetchRepoStructure.fulfilled, (state, action) => {
         state.loading = false;
-        state.root = action.payload.files as FileNode;
+        state.root = action.payload.repo.files as FileNode;
         const fileMap: Record<string, FileNode> = {};
         buildFileMap(state.root, "", fileMap);
         state.fileMap = fileMap;
+        state.repoLink = action.payload.repoLink;
       })
       .addCase(fetchRepoStructure.rejected, (state, action) => {
         state.loading = false;
