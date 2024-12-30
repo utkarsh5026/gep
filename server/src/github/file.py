@@ -99,7 +99,6 @@ def list_files_recursively(directory: Path) -> list[str]:
             else:
                 file_path = os.path.join(relative_root, file)
 
-            # Check if file should be ignored
             if not gitignore_spec.match_file(file_path):
                 file_list.append(file_path)
 
@@ -175,35 +174,3 @@ def create_file_tree(file_paths: list[str]) -> FileNode:
     sort_tree(root_node)
     return root_node
 
-
-async def read_file(file_path: Path) -> str:
-    """
-    Read the content of a file asynchronously.
-
-    Args:
-        file_path (Path): Path to the file to read
-
-    Returns:
-        str: The content of the file
-    """
-    _verify_file_exists(file_path)
-    try:
-        async with aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
-            content = await file.read()
-            return content
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-
-
-def _verify_file_exists(file_path: Path) -> None:
-    """
-    Verify that a file exists, raising an error if it does not.
-
-    Args:
-        file_path (Path): Path to the file to verify
-    """
-    if not file_path.exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-    if not file_path.is_file():
-        raise ValueError(f"Path is not a file: {file_path}")
