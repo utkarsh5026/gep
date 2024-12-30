@@ -1,6 +1,7 @@
 from pathlib import Path
 from tenacity import retry, stop_after_attempt, wait_exponential
-import aiofiles
+
+from .file import  read_file
 
 
 from .internal import (
@@ -21,7 +22,10 @@ class GitManager:
 
     def __init__(self):
         self.git_path = check_git_available()
-        self.repo_path = Path.home() / ".gep" / "repos"
+
+    @property
+    def repo_path(self):
+        return Path.home() / ".gep" / "repos"
 
     @retry(
         stop=stop_after_attempt(3),
@@ -72,7 +76,7 @@ class GitManager:
             await self.download_github_repo(url)
             return await self.load_repo(url)
 
-    async def get_file_content(self, url: str, file_path: str):
+    async def get_file_content(self, url: str, file_path: str) -> str:
         """
         Get the content of a file from a repository asynchronously
 
@@ -86,9 +90,7 @@ class GitManager:
         target_path = self.get_repo_path(url)
         full_path = target_path / file_path
 
-        try:
-            async with aiofiles.open(full_path, mode='r', encoding='utf-8') as file:
-                content = await file.read()
-                return content
-        except FileNotFoundError:
+        if not full_path.exists():
             raise FileNotFoundError(f"File not found: {full_path}")
+
+        return await read_file(full_path)

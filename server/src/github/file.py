@@ -1,4 +1,6 @@
 import os
+import aiofiles
+
 from typing import Literal, Optional
 from pathlib import Path
 from pathspec import PathSpec
@@ -172,3 +174,21 @@ def create_file_tree(file_paths: list[str]) -> FileNode:
     # Sort the entire tree after creation
     sort_tree(root_node)
     return root_node
+
+
+async def read_file(file_path: Path) -> str:
+    """
+    Read the content of a file asynchronously.
+
+    Args:
+        file_path (Path): Path to the file to read
+
+    Returns:
+        str: The content of the file
+    """
+    try:
+        async with aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
+            content = await file.read()
+            return content
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {file_path}")
