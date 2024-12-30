@@ -173,7 +173,8 @@ class ProjectConfig(BaseModel):
         emb_config = info.data.get("emb_config")
         print(emb_config.dimension, v.dimension)
         if emb_config and v.dimension != emb_config.dimension:
-            raise ConfigValidationError("Vector dimension must match embedding dimension")
+            raise ConfigValidationError(
+                "Vector dimension must match embedding dimension")
 
         return v
 
@@ -229,11 +230,12 @@ llm_config:
   #   - gpt-4-turbo-preview (recommended)
   #   - gpt-4
   #   - gpt-3.5-turbo
+  #   - gpt-4o-mini
   # Anthropic options:
   #   - claude-3-opus
   #   - claude-3-sonnet
   #   - claude-2.1
-  model_name: "gpt-4-turbo-preview"
+  model_name: "gpt-4o-mini"
   
   # Response temperature (optional)
   # Range: 0.0 to 1.0
