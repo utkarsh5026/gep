@@ -90,7 +90,4 @@ class GitManager:
         target_path = self.get_repo_path(url)
         full_path = target_path / file_path
 
-        if not full_path.exists():
-            raise FileNotFoundError(f"File not found: {full_path}")
-
         return await read_file(full_path)

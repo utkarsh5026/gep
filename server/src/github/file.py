@@ -186,9 +186,24 @@ async def read_file(file_path: Path) -> str:
     Returns:
         str: The content of the file
     """
+    _verify_file_exists(file_path)
     try:
         async with aiofiles.open(file_path, mode='r', encoding='utf-8') as file:
             content = await file.read()
             return content
     except FileNotFoundError:
         raise FileNotFoundError(f"File not found: {file_path}")
+
+
+
+def _verify_file_exists(file_path: Path) -> None:
+    """
+    Verify that a file exists, raising an error if it does not.
+
+    Args:
+        file_path (Path): Path to the file to verify
+    """
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+    if not file_path.is_file():
+        raise ValueError(f"Path is not a file: {file_path}")
