@@ -46,6 +46,22 @@ class QueryProcessor:
                  max_results: int = 10,
                  min_relevance_score: float = 0.5,
                  max_batch_tokens: float = 6000) -> None:
+        """
+        Initialize the QueryProcessor.
+
+        Args:
+            embedding_manager (EmbeddingManager): Manager for vector embeddings and similarity search
+            llm (BaseLanguageModel): Language model for analyzing code
+            max_results (int, optional): Maximum number of search results to return. Defaults to 10.
+            min_relevance_score (float, optional): Minimum similarity score (0-1) for results. 
+                Defaults to 0.5.
+            max_batch_tokens (float, optional): Maximum tokens per batch sent to LLM.
+                Defaults to 6000.
+
+        The QueryProcessor coordinates between the embedding system for semantic search
+        and the language model for code analysis. It batches results based on token limits
+        and filters by relevance score.
+        """
         self.embedding_manager = embedding_manager
         self.llm = llm
         self.max_results = max_results
