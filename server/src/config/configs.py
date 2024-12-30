@@ -4,6 +4,7 @@ from pathlib import Path
 
 from vector import EmbeddingProviderType, VectorStoreType
 from query import LLMType
+from file_utils import write_file
 
 
 class ConfigError(Exception):
@@ -332,15 +333,15 @@ accepted_patterns:
 """
 
 
-def create_sample_config_file(file_path: Optional[str]) -> None:
+async def create_sample_config_file(file_path: Optional[str]) -> None:
     """
     Creates a sample configuration file at the given path
     """
     if file_path is None:
         file_path = Path.cwd() / 'config.yaml'
 
-    with open(file_path, "w") as f:
-        f.write(sample_config())
+    config = sample_config()
+    await write_file(file_path, config)
 
 
 def create_config_dict(config: ProjectConfig) -> dict[str, Any]:
