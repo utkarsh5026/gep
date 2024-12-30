@@ -1,9 +1,6 @@
 from pathlib import Path
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from .file import  read_file
-
-
 from .internal import (
     check_git_available,
     GitCommandError,
@@ -75,19 +72,3 @@ class GitManager:
         except FileNotFoundError:
             await self.download_github_repo(url)
             return await self.load_repo(url)
-
-    async def get_file_content(self, url: str, file_path: str) -> str:
-        """
-        Get the content of a file from a repository asynchronously
-
-        Parameters:
-            url (str): The URL of the repository
-            file_path (str): The path to the file within the repository
-
-        Returns:
-            str: The content of the file
-        """
-        target_path = self.get_repo_path(url)
-        full_path = target_path / file_path
-
-        return await read_file(full_path)
