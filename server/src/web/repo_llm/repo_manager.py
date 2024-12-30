@@ -36,9 +36,21 @@ class LLmRepoManager:
             raise ValueError(f"Repository not loaded: {repo_url}")
 
     @staticmethod
-    async def get_file_content(repo_url: str, file_path: str):
+    async def get_file_content(repo_url: str, file_path: str) -> str:
         """
         Get the content of a file in a repository.
+
+        Args:
+            repo_url (str): URL of the git repository
+            file_path (str): Path to the file within the repository
+
+        Returns:
+            str: The content of the file as a string
+
+        Raises:
+            FileNotFoundError: If the file does not exist
+            ValueError: If the repository URL is invalid
+            IOError: If there are issues reading the file
         """
         repo_path = git_manager.get_repo_path(url=repo_url)
         file_path = repo_path / file_path
