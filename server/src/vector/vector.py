@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Optional
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -139,9 +140,11 @@ class FAISSVectorStore(VectorStore):
     Vector store using FAISS.
     """
 
-    def __init__(self, dimension: int, index_path: str, embedding_model: Optional[Embeddings] = None) -> None:
+    def __init__(self, dimension: int,
+                 index_path: Path,
+                 embedding_model: Optional[Embeddings] = None) -> None:
         self.dimension = dimension
-        self.index_path = index_path
+        self.index_path = index_path.resolve()
         self.embedding_model = embedding_model or OpenAIEmbeddings()
 
         self.index = faiss.IndexFlatL2(dimension)
@@ -179,7 +182,7 @@ class FAISSVectorStore(VectorStore):
         """Load the FAISS index from disk if it exists."""
         try:
             idx_path = self.index_path
-            if os.path.exists(idx_path):
+            if idx_path.exists():
                 async with aiofiles.open(idx_path, 'rb') as f:
                     index_data = await f.read()
                 self.index = await asyncio.to_thread(
