@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useAppSelector, useAppDispatch } from "../root/hooks.ts";
 import {
   type FileNode,
@@ -11,6 +11,7 @@ interface RepoState {
   loading: boolean;
   error: string | null;
   fileMap: Record<string, FileNode>;
+  files: string[];
   fetchRepo: (url: string) => void;
 }
 
@@ -22,6 +23,7 @@ interface RepoState {
  *   - loading: Boolean indicating if a repository fetch is in progress
  *   - error: Error message if repository fetch failed, null otherwise
  *   - fileMap: Map of file paths to FileNode objects for quick lookups
+ *   - files: Array of file paths
  *   - repoLink: URL of the currently loaded repository
  *   - fetchRepo: Function to fetch and load a new repository by URL
  */
@@ -38,12 +40,17 @@ const useRepo = (): RepoState => {
     [dispatch]
   );
 
-  console.dir(fileMap, { depth: null });
+  const files = useMemo(
+    () => Object.keys(fileMap).filter((path) => fileMap[path].type === "file"),
+    [fileMap]
+  );
+
   return {
     root,
     loading,
     error,
     fileMap,
+    files,
     repoLink,
     fetchRepo,
   };
