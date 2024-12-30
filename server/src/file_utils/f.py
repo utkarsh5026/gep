@@ -90,7 +90,8 @@ Write content to a file
 
     except FileExistsError:
         raise FileExistsError(
-            f"File already exists and mode is 'x' (exclusive creation): {file_path}"
+            f"File already exists and mode is 'x' (exclusive creation): {
+                file_path}"
         )
     except PermissionError:
         raise PermissionError(
@@ -102,5 +103,6 @@ Write content to a file
             e.object,
             e.start,
             e.end,
-            f"Failed to encode content for file {file_path} with encoding '{encoding}'. "
+            f"Failed to encode content for file {
+                file_path} with encoding '{encoding}'. "
             f"Original error: {str(e)}")
