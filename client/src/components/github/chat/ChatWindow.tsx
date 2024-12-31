@@ -1,5 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import HumanMessage from "./HumanMessage";
+import ChatInput from "./ChatInput";
 
 interface Message {
   role: "user" | "assistant";
@@ -9,6 +10,7 @@ interface Message {
 export default function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,13 +18,6 @@ export default function ChatWindow() {
 
     setMessages([...messages, { role: "user", content: input }]);
     setInput("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
   };
 
   return (
@@ -35,15 +30,11 @@ export default function ChatWindow() {
           />
         ))}
       </div>
-      <form onSubmit={handleSubmit} className="flex">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message... (Press Enter to send)"
-          className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-        />
+      <form
+        onSubmit={handleSubmit}
+        className="flex w-full h-60 border border-gray-200 dark:border-gray-700 rounded-lg p-2"
+      >
+        <ChatInput onFileSelect={(files) => setSelectedFiles(files)} />
       </form>
     </div>
   );
