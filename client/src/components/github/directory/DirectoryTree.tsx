@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { FileNode } from "../../../store/slices/repo.ts";
 import { getFileIcon } from "./fileIcons";
+import useEditor from "../../../store/hooks/editor.ts";
 
 interface DirectoryTreeProps {
   node: FileNode;
@@ -18,6 +19,7 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({
   selectedPath = null,
   currentPath = "",
 }) => {
+  const { fetchFileContent } = useEditor();
   const fullPath = currentPath ? `${currentPath}/${node.name}` : node.name;
   const [isOpen, setIsOpen] = useState(
     initialOpenPaths.includes(fullPath) ||
@@ -48,6 +50,8 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({
   const handleClick = () => {
     if (node.type === "directory") {
       setIsOpen(!isOpen);
+    } else {
+      fetchFileContent(fullPath);
     }
   };
 
