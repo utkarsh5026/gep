@@ -1,20 +1,23 @@
 import { useEffect, useRef } from "react";
 import { EditorState, Extension } from "@codemirror/state";
-import { EditorView, ViewUpdate } from "@codemirror/view";
+import { EditorView, ViewUpdate, keymap } from "@codemirror/view";
 import { languageConfigurations } from "./language";
 import useEditor from "../store/hooks/editor";
 import { basicSetup } from "codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { history, historyKeymap } from "@codemirror/commands";
 
 interface UseCodeMirrorProps {
   fileId: string;
   onChange?: (value: string) => void;
   extensions?: Extension[];
+  onSelectedChange?: (selectedText: string) => void;
 }
 
 export function useCodeMirror({
   fileId,
   onChange,
+  onSelectedChange,
   extensions = [],
 }: UseCodeMirrorProps) {
   const { updateFileContent, openFiles } = useEditor();
@@ -24,13 +27,36 @@ export function useCodeMirror({
   const file = openFiles.find((f) => f.id === fileId);
   console.log(file);
   useEffect(() => {
-    if (!containerRef.current || !file || editorRef.current) return;
+    if (!containerRef.current || !file) return;
+
+    console.log("Editor effect running, editor exists:", !!editorRef.current);
+
+    if (editorRef.current) {
+      const currentContent = editorRef.current.state.doc.toString();
+      console.log("Content comparison:", {
+        current: currentContent,
+        file: file.content,
+        different: currentContent !== file.content,
+      });
+      if (currentContent !== file.content) {
+        editorRef.current.dispatch({
+          changes: {
+            from: 0,
+            to: currentContent.length,
+            insert: file.content,
+          },
+        });
+      }
+      return;
+    }
 
     const langConfig = languageConfigurations[file.language];
 
     const baseExtensions: Extension[] = [
       basicSetup,
       oneDark,
+      history(),
+      keymap.of(historyKeymap),
       langConfig.extension(),
       EditorState.tabSize.of(langConfig.editorConfig?.tabSize ?? 2),
       EditorView.theme({
@@ -62,8 +88,19 @@ export function useCodeMirror({
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           const newContent = update.state.doc.toString();
-          updateFileContent(fileId, newContent);
-          onChange?.(newContent);
+          if (newContent !== file.content) {
+            updateFileContent(fileId, newContent);
+            onChange?.(newContent);
+          }
+        }
+
+        if (update.selectionSet) {
+          const selection = update.state.selection.main;
+          const selectedText = update.state.doc.sliceString(
+            selection.from,
+            selection.to
+          );
+          onSelectedChange?.(selectedText);
         }
       }),
     ];
@@ -82,7 +119,7 @@ export function useCodeMirror({
       editorRef.current?.destroy();
       editorRef.current = undefined;
     };
-  }, [file, fileId, extensions, onChange, updateFileContent]);
+  }, [file, fileId, extensions, onChange, updateFileContent, onSelectedChange]);
 
   return {
     containerRef,
@@ -98,6 +135,28 @@ export function useCodeMirror({
           },
         });
       }
+    },
+    getSelection: () => {
+      if (!editorRef.current)
+        return {
+          text: "",
+          startLine: 0,
+          endLine: 0,
+          file: file,
+        };
+
+      const selection = editorRef.current.state.selection.main;
+      const doc = editorRef.current.state.doc;
+      const text = editorRef.current.state.sliceDoc(
+        selection.from,
+        selection.to
+      );
+      return {
+        text,
+        startLine: doc.lineAt(selection.from).number,
+        endLine: doc.lineAt(selection.to).number,
+        file: file,
+      };
     },
   };
 }
