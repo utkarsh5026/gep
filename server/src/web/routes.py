@@ -1,9 +1,10 @@
-from github import git_manager
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from starlette.status import HTTP_404_NOT_FOUND
-from logger import logger
 
+from github import git_manager
+from logger import logger
+from web.repo_llm import llm_manager
 
 router = APIRouter(prefix="/github")
 
@@ -36,6 +37,8 @@ async def download_github_repo(url: str):
 async def load_repo(url: str):
     logger.info(f"Loading repository: {url}")
     result = await git_manager.load_repo(url)
+
+    logger.info(f"Loaded repository: {url}")
     return result
 
 
@@ -43,5 +46,5 @@ async def load_repo(url: str):
             summary="Get the content of a file",
             description="Get the content of a file")
 async def get_file_content(repo_link: str, file_path: str):
-    result = await git_manager.get_file_content(repo_link, file_path)
+    result = await llm_manager.get_file_content(repo_link, file_path)
     return result

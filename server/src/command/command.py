@@ -8,7 +8,7 @@ from vector import VectorStoreType, EmbeddingProviderType
 from query import QueryProcessor, LLMType
 from prompt import PromptProviderType, PromptType
 from config import ProjectManager
-from cmd.commands import EmbedCommand, APIKeyCommand, InitProjectCommand, SampleConfigCommand, UpdateIgnoreCommand
+from command.commands import EmbedCommand, APIKeyCommand, InitProjectCommand, SampleConfigCommand, UpdateIgnoreCommand
 
 
 # Configure rich-click

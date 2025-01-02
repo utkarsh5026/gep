@@ -15,7 +15,7 @@ async def main():
     from src.vector import EmbeddingManager, OpenAIEmbeddingProvider, FAISSVectorStore, EmbeddingProviderConfig, create_file_content_map
     from src.query import QueryProcessor
     from src.prompt import PromptType, PromptProviderType
-    from src.cmd import create_output_manager
+    from src.command import create_output_manager
 
     file_content_map = create_file_content_map(
         root_dir=os.path.join("..", "src", "watcher"),

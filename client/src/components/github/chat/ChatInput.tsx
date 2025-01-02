@@ -8,12 +8,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../ui/tooltip";
-
-interface SelectedFile {
-  path: string;
-  fileName: string;
-}
-
+import useChat from "../../../store/hooks/chat";
+import { SelectedFile } from "../../../store/slices/chat";
 interface ChatInputProps {
   onFileSelect?: (files: string[]) => void;
 }
@@ -23,6 +19,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onFileSelect }) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { setHumanMsgText, currentHumanMessage } = useChat();
+
+  console.log(currentHumanMessage);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -120,6 +119,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onFileSelect }) => {
           <Plus className="w-5 h-5" />
         </button>
         <textarea
+          value={currentHumanMessage?.messageText ?? ""}
+          onChange={(e) => setHumanMsgText(e.target.value)}
           placeholder="Type your message..."
           className="w-full pl-10 p-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 resize-none h-full"
         />
