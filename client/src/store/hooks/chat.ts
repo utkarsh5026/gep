@@ -51,7 +51,10 @@ const useChat = () => {
           messageText: currentHumanMessage?.messageText ?? "",
           contextFiles:
             currentHumanMessage?.contextFiles.filter(
-              (f) => f.path !== file.path
+              (f) =>
+                f.path !== file.path &&
+                f.startLine !== file.startLine &&
+                f.endLine !== file.endLine
             ) ?? [],
         })
       ),

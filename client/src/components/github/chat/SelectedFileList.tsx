@@ -8,7 +8,10 @@ import {
 } from "../../ui/tooltip";
 import { getFileIcon } from "../directory/fileIcons";
 import { type SelectedFile } from "../../../store/slices/chat";
-import useChat from "../../../store/hooks/chat";
+import useChat, {
+  FULL_FILE_START_LINE,
+  FULL_FILE_END_LINE,
+} from "../../../store/hooks/chat";
 
 interface SelectedFileListProps {
   selectedFiles: SelectedFile[];
@@ -27,7 +30,23 @@ const SelectedFileList: React.FC<SelectedFileListProps> = ({
             <TooltipTrigger>
               <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
                 {getFileIcon(file.fileName)}
-                <span>{file.fileName}</span>
+                <span>
+                  {file.fileName}
+                  {(file.startLine !== FULL_FILE_START_LINE ||
+                    file.endLine !== FULL_FILE_END_LINE) && (
+                    <span className="text-gray-500 dark:text-gray-400">
+                      (
+                      {file.startLine === FULL_FILE_START_LINE
+                        ? "Full File"
+                        : file.startLine}
+                      -
+                      {file.endLine === FULL_FILE_END_LINE
+                        ? "Full File"
+                        : file.endLine}
+                      )
+                    </span>
+                  )}
+                </span>
                 <button
                   onClick={() => removeFileFromHumanMsg(file)}
                   aria-label={`Remove ${file.fileName}`}
