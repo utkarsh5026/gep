@@ -15,7 +15,7 @@ const ChatInput: React.FC = () => {
 
   const selectedFiles = useMemo(
     () => currentHumanMessage?.contextFiles ?? [],
-    [currentHumanMessage]
+    [currentHumanMessage?.contextFiles]
   );
 
   console.log(currentHumanMessage);
