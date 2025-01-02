@@ -260,6 +260,15 @@ export function isValidLanguage(languageId: string): boolean {
   return languageId in languageConfigurations;
 }
 
+/**
+ * Gets the language ID for a given file extension
+ *
+ * @param extension - The file extension to look up (without the dot)
+ * @returns The language ID if found, or undefined if no matching language
+ * @example
+ * getLanguageByExtension('ts') // Returns 'typescript'
+ * getLanguageByExtension('py') // Returns 'python'
+ */
 export function getLanguageByExtension(extension: string): string {
   return Object.keys(languageConfigurations).find((lang) =>
     languageConfigurations[lang].fileExtensions.includes(extension)
