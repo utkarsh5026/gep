@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView, ViewUpdate, keymap } from "@codemirror/view";
 import { languageConfigurations } from "./language";
@@ -116,16 +116,19 @@ export function useCodeMirror({
     });
 
     return () => {
-      editorRef.current?.destroy();
-      editorRef.current = undefined;
+      if (editorRef.current) {
+        editorRef.current.destroy();
+        editorRef.current = undefined;
+      }
     };
   }, [file, fileId, extensions, onChange, updateFileContent, onSelectedChange]);
 
-  return {
-    containerRef,
-    editor: editorRef.current,
-    getContent: () => editorRef.current?.state.doc.toString() ?? "",
-    setContent: (content: string) => {
+  const getContent = useCallback(() => {
+    return editorRef.current?.state.doc.toString() ?? "";
+  }, [editorRef]);
+
+  const setContent = useCallback(
+    (content: string) => {
       if (editorRef.current) {
         editorRef.current.dispatch({
           changes: {
@@ -136,27 +139,34 @@ export function useCodeMirror({
         });
       }
     },
-    getSelection: () => {
-      if (!editorRef.current)
-        return {
-          text: "",
-          startLine: 0,
-          endLine: 0,
-          file: file,
-        };
+    [editorRef]
+  );
 
-      const selection = editorRef.current.state.selection.main;
-      const doc = editorRef.current.state.doc;
-      const text = editorRef.current.state.sliceDoc(
-        selection.from,
-        selection.to
-      );
+  const getSelection = useCallback(() => {
+    if (!editorRef.current)
       return {
-        text,
-        startLine: doc.lineAt(selection.from).number,
-        endLine: doc.lineAt(selection.to).number,
+        text: "",
+        startLine: 0,
+        endLine: 0,
         file: file,
       };
-    },
+
+    const selection = editorRef.current.state.selection.main;
+    const doc = editorRef.current.state.doc;
+    const text = editorRef.current.state.sliceDoc(selection.from, selection.to);
+    return {
+      text,
+      startLine: doc.lineAt(selection.from).number,
+      endLine: doc.lineAt(selection.to).number,
+      file: file,
+    };
+  }, [editorRef, file]);
+
+  return {
+    containerRef,
+    editor: editorRef.current,
+    getContent,
+    setContent,
+    getSelection,
   };
 }
