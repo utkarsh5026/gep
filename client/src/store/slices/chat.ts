@@ -11,7 +11,6 @@ export type SelectedFile = {
 export type HumanMessage = {
   messageText: string;
   contextFiles: SelectedFile[];
-  selectionTexts: string[];
 };
 
 export type AiMessage = {
@@ -44,7 +43,6 @@ const createChat = (): Chat => {
     currentHumanMessage: {
       messageText: "",
       contextFiles: [],
-      selectionTexts: [],
     },
   };
 };

@@ -1,25 +1,22 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Plus, X } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Plus } from "lucide-react";
 import FileList from "./FileList";
-import { getFileIcon } from "../directory/fileIcons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../../ui/tooltip";
-import useChat from "../../../store/hooks/chat";
-import { SelectedFile } from "../../../store/slices/chat";
-interface ChatInputProps {
-  onFileSelect?: (files: string[]) => void;
-}
+import useChat, {
+  FULL_FILE_END_LINE,
+  FULL_FILE_START_LINE,
+} from "../../../store/hooks/chat";
+import SelectedFileList from "./SelectedFileList";
 
-const ChatInput: React.FC<ChatInputProps> = ({ onFileSelect }) => {
+const ChatInput: React.FC = () => {
   const [showFileSearch, setShowFileSearch] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { setHumanMsgText, currentHumanMessage } = useChat();
+  const { setHumanMsgText, currentHumanMessage, addFileToHumanMsg } = useChat();
+
+  const selectedFiles = useMemo(
+    () => currentHumanMessage?.contextFiles ?? [],
+    [currentHumanMessage]
+  );
 
   console.log(currentHumanMessage);
 
@@ -41,10 +38,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ onFileSelect }) => {
     const fileName = path.split("/").pop() ?? "";
     // Check for duplicate paths
     if (!selectedFiles.some((file) => file.path === path)) {
-      const newFile = { path, fileName };
-      const newFiles = [...selectedFiles, newFile];
-      setSelectedFiles(newFiles);
-      onFileSelect?.(newFiles.map((f) => f.path));
+      const newFile = {
+        path,
+        fileName,
+        startLine: FULL_FILE_START_LINE,
+        endLine: FULL_FILE_END_LINE,
+      };
+      addFileToHumanMsg(newFile);
     }
   };
 
@@ -52,38 +52,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onFileSelect }) => {
     <div className="relative w-full h-full flex flex-col">
       {/* File chips */}
       {selectedFiles.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {selectedFiles.map((file) => (
-            <TooltipProvider key={file.path}>
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
-                    {getFileIcon(file.fileName)}
-                    <span>{file.fileName}</span>
-                    <button
-                      onClick={() => {
-                        const newFiles = selectedFiles.filter(
-                          (f) => f.path !== file.path
-                        );
-                        setSelectedFiles(newFiles);
-                        onFileSelect?.(newFiles.map((f) => f.path));
-                      }}
-                      aria-label={`Remove ${file.fileName}`}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-100 dark:bg-gray-700">
-                  <p className="text-xs truncate dark:text-gray-400">
-                    {file.path}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
+        <SelectedFileList selectedFiles={selectedFiles} />
       )}
 
       {showFileSearch && (

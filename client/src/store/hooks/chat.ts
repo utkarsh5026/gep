@@ -7,6 +7,9 @@ import {
   setCurrentHumanMessage as setCurrentHumanMessageAction,
 } from "../slices/chat";
 
+export const FULL_FILE_START_LINE = -1;
+export const FULL_FILE_END_LINE = -1;
+
 const useChat = () => {
   const dispatch = useAppDispatch();
   const currentChatId = useAppSelector((state) => state.chat.currentChatId);
@@ -25,7 +28,6 @@ const useChat = () => {
         setCurrentHumanMessageAction({
           messageText: text,
           contextFiles: currentHumanMessage?.contextFiles ?? [],
-          selectionTexts: currentHumanMessage?.selectionTexts ?? [],
         })
       ),
     [dispatch, currentHumanMessage]
@@ -37,7 +39,6 @@ const useChat = () => {
         setCurrentHumanMessageAction({
           messageText: currentHumanMessage?.messageText ?? "",
           contextFiles: [...(currentHumanMessage?.contextFiles ?? []), file],
-          selectionTexts: currentHumanMessage?.selectionTexts ?? [],
         })
       ),
     [dispatch, currentHumanMessage]
@@ -52,7 +53,6 @@ const useChat = () => {
             currentHumanMessage?.contextFiles.filter(
               (f) => f.path !== file.path
             ) ?? [],
-          selectionTexts: currentHumanMessage?.selectionTexts ?? [],
         })
       ),
     [dispatch, currentHumanMessage]

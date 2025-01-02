@@ -12,12 +12,10 @@ import useChat from "../../../store/hooks/chat";
 
 interface SelectedFileListProps {
   selectedFiles: SelectedFile[];
-  onFileSelect: (file: SelectedFile) => void;
 }
 
 const SelectedFileList: React.FC<SelectedFileListProps> = ({
   selectedFiles,
-  onFileSelect,
 }) => {
   const { removeFileFromHumanMsg } = useChat();
 
