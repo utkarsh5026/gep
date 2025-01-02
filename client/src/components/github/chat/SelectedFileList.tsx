@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { X } from "lucide-react";
 import {
   Tooltip,
@@ -7,20 +7,19 @@ import {
   TooltipTrigger,
 } from "../../ui/tooltip";
 import { getFileIcon } from "../directory/fileIcons";
-import { type SelectedFile } from "../../../store/slices/chat";
 import useChat, {
   FULL_FILE_START_LINE,
   FULL_FILE_END_LINE,
 } from "../../../store/hooks/chat";
 
-interface SelectedFileListProps {
-  selectedFiles: SelectedFile[];
-}
-
-const SelectedFileList: React.FC<SelectedFileListProps> = ({
-  selectedFiles,
-}) => {
+const SelectedFileList: React.FC = () => {
+  const { currentHumanMessage } = useChat();
   const { removeFileFromHumanMsg } = useChat();
+
+  const selectedFiles = useMemo(
+    () => currentHumanMessage?.contextFiles ?? [],
+    [currentHumanMessage]
+  );
 
   return (
     <div className="flex flex-wrap gap-2 mb-4">

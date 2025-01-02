@@ -1,24 +1,22 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
-import FileList from "./FileList";
 import useChat, {
   FULL_FILE_END_LINE,
   FULL_FILE_START_LINE,
 } from "../../../store/hooks/chat";
 import SelectedFileList from "./SelectedFileList";
+import ChatInputTextArea from "./ChatInputTextArea";
+import FileSearchPopup from "./FileSearchPopup";
 
 const ChatInput: React.FC = () => {
   const [showFileSearch, setShowFileSearch] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const { setHumanMsgText, currentHumanMessage, addFileToHumanMsg } = useChat();
+  const { currentHumanMessage, addFileToHumanMsg } = useChat();
 
   const selectedFiles = useMemo(
     () => currentHumanMessage?.contextFiles ?? [],
     [currentHumanMessage?.contextFiles]
   );
-
-  console.log(currentHumanMessage);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -50,32 +48,12 @@ const ChatInput: React.FC = () => {
 
   return (
     <div className="relative w-full h-full flex flex-col">
-      {/* File chips */}
-      {selectedFiles.length > 0 && (
-        <SelectedFileList selectedFiles={selectedFiles} />
-      )}
-
+      <SelectedFileList />
       {showFileSearch && (
-        <div
-          className="absolute bottom-full mb-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
-          ref={searchContainerRef}
-        >
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search files..."
-            className="w-full p-2 border-b border-gray-200 dark:border-gray-700 rounded-t-lg focus:outline-none dark:bg-gray-700 dark:text-gray-100"
-          />
-          <FileList
-            searchQuery={searchQuery}
-            onFileSelect={(file) => {
-              handleFileSelect(file);
-              setSearchQuery("");
-              setShowFileSearch(false);
-            }}
-          />
-        </div>
+        <FileSearchPopup
+          onFileSelect={handleFileSelect}
+          onClose={() => setShowFileSearch(false)}
+        />
       )}
 
       <div className="relative flex flex-1">
@@ -87,12 +65,7 @@ const ChatInput: React.FC = () => {
         >
           <Plus className="w-5 h-5" />
         </button>
-        <textarea
-          value={currentHumanMessage?.messageText ?? ""}
-          onChange={(e) => setHumanMsgText(e.target.value)}
-          placeholder="Type your message..."
-          className="w-full pl-10 p-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 resize-none h-full"
-        />
+        <ChatInputTextArea />
       </div>
     </div>
   );
