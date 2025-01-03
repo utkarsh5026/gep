@@ -5,16 +5,16 @@ router = APIRouter(prefix="/llm")
 
 
 class ContextFile(BaseModel):
-    file_path: str
-    start_line: int
-    end_line: int
+    path: str
+    startLine: int
+    endLine: int
 
 
 class ChatMessage(BaseModel):
-    chat_id: str
+    chatId: str
     message: str
-    context_files: list[ContextFile]
-    github_repo: str
+    contextFiles: list[ContextFile]
+    githubRepo: str
 
 
 @router.post("/chat")

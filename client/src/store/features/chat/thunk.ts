@@ -13,11 +13,12 @@ export const sendMessageThunk = createAsyncThunk(
   async (msg: HumanMessage, { rejectWithValue, getState }) => {
     try {
       const { chat, repo } = getState() as RootState;
+      const { messageText, contextFiles } = msg;
       const payload = {
-        chat_id: chat.currentChatId,
-        message: msg.messageText,
-        context_files: [],
-        github_repo: repo.repoLink ?? "",
+        chatId: chat.currentChatId,
+        message: messageText,
+        contextFiles,
+        githubRepo: repo.repoLink ?? "",
       };
 
       const response = await api.post("/llm/chat", payload);
