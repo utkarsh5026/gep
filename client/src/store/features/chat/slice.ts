@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import type { Chat, HumanMessage, ChatState } from "./type";
+import { sendMessageThunk } from "./thunk";
 
 /**
  * Create a new chat with a unique ID
@@ -49,6 +50,11 @@ const chatSlice = createSlice({
       state.currentChatId = newChat.chatId;
       state.chatMap[newChat.chatId] = newChat;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(sendMessageThunk.pending, (state) => {
+      state.loading = true;
+    });
   },
 });
 

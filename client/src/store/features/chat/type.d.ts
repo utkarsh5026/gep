@@ -61,3 +61,12 @@ export type ChatState = {
   /** Map of chat IDs to chat objects for quick lookup */
   chatMap: Record<string, Chat>;
 };
+
+/**
+ * Represents the payload for a chat operation
+ */
+export type ChatPayload = {
+  chatId: string;
+  message: HumanMessage;
+  repoLink: string;
+};

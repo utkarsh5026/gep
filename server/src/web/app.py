@@ -2,9 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from routes import github_router
+from web.routes import (
+    github_router,
+    llm_router,
+    settings_router,
+)
 
-app = FastAPI()
+app = FastAPI(debug=True)
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,3 +19,5 @@ app.add_middleware(
 )
 
 app.include_router(github_router)
+app.include_router(llm_router)
+app.include_router(settings_router)
