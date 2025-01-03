@@ -4,9 +4,11 @@ import {
   createNewChat as createNewChatAction,
   setCurrentChatId as setCurrentChatIdAction,
   setCurrentHumanMessage as setCurrentHumanMessageAction,
+  updateContextFile as updateContextFileAction,
 } from "./slice.ts";
 import type { SelectedFile, HumanMessage } from "./type";
 import { sendMessageThunk } from "./thunk";
+import { getFileName } from "../../../utils/file.ts";
 
 export const FULL_FILE_START_LINE = -1;
 export const FULL_FILE_END_LINE = -1;
@@ -31,6 +33,8 @@ type ChatHook = {
   setCurrentChatId: (chatId: string) => void;
   /** Sends the current human message to the AI assistant */
   sendMessage: () => Promise<void>;
+  /** Adds a full context file to the current human message */
+  addFullContextFile: (filePath: string) => void;
 };
 
 /**
@@ -64,30 +68,42 @@ const useChat = (): ChatHook => {
 
   const addFileToHumanMsg = useCallback(
     (newFile: SelectedFile) => {
-      const updatedFiles = [
-        ...(currentHumanMessage?.contextFiles ?? []),
-        newFile,
-      ];
-      updateHumanMessage({ contextFiles: updatedFiles });
+      dispatch(
+        updateContextFileAction({
+          operation: "add",
+          contextFile: newFile,
+        })
+      );
     },
-    [updateHumanMessage, currentHumanMessage]
+    [dispatch]
   );
 
   const removeFileFromHumanMsg = useCallback(
     (fileToRemove: SelectedFile) => {
-      const isMatchingFile = (file: SelectedFile) =>
-        file.path === fileToRemove.path &&
-        file.startLine === fileToRemove.startLine &&
-        file.endLine === fileToRemove.endLine;
-
-      const updatedFiles =
-        currentHumanMessage?.contextFiles.filter(
-          (file) => !isMatchingFile(file)
-        ) ?? [];
-
-      updateHumanMessage({ contextFiles: updatedFiles });
+      dispatch(
+        updateContextFileAction({
+          operation: "remove",
+          contextFile: fileToRemove,
+        })
+      );
     },
-    [updateHumanMessage, currentHumanMessage]
+    [dispatch]
+  );
+
+  const addFullContextFile = useCallback(
+    (filePath: string) => {
+      const file = {
+        path: filePath,
+        fileName: getFileName(filePath),
+        startLine: FULL_FILE_START_LINE,
+        endLine: FULL_FILE_END_LINE,
+        content: null,
+      };
+      dispatch(
+        updateContextFileAction({ operation: "add", contextFile: file })
+      );
+    },
+    [dispatch]
   );
 
   const setCurrentChatId = useCallback(
@@ -114,6 +130,7 @@ const useChat = (): ChatHook => {
     removeFileFromHumanMsg,
     setCurrentChatId,
     sendMessage,
+    addFullContextFile,
   };
 };
 

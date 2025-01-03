@@ -70,3 +70,8 @@ export type ChatPayload = {
   message: HumanMessage;
   repoLink: string;
 };
+
+export type UpdateContextFilesPayload = {
+  operation: "add" | "remove";
+  contextFile: SelectedFile;
+};

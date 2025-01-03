@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import type { FileNode } from "../../../store/features/repo/type.d";
 import { getFileIcon } from "./fileIcons";
 import useEditor from "../../../store/features/editor/hook";
+import useChat from "../../../store/features/chat/hook";
 
 interface DirectoryTreeProps {
   node: FileNode;
@@ -20,6 +21,7 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({
   currentPath = "",
 }) => {
   const { fetchFileContent } = useEditor();
+  const { addFullContextFile } = useChat();
   const fullPath = currentPath ? `${currentPath}/${node.name}` : node.name;
   const [isOpen, setIsOpen] = useState(
     initialOpenPaths.includes(fullPath) ||
@@ -51,6 +53,7 @@ const DirectoryTree: React.FC<DirectoryTreeProps> = ({
     if (node.type === "directory") {
       setIsOpen(!isOpen);
     } else {
+      addFullContextFile(fullPath);
       fetchFileContent(fullPath);
     }
   };
