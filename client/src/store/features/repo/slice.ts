@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "../../client/axios";
+import api from "../../../client/axios.ts";
 import axios from "axios";
+import type { FileNode } from "./type";
 
 /**
  * Fetch the repository structure from the server
@@ -42,12 +43,6 @@ const buildFileMap = (
   if (node.children) {
     node.children.forEach((child) => buildFileMap(child, fullPath, fileMap));
   }
-};
-
-export type FileNode = {
-  name: string;
-  type: "file" | "directory";
-  children?: FileNode[];
 };
 
 interface RepoState {

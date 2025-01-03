@@ -1,12 +1,11 @@
 import React from "react";
-import useRepo from "../../../store/hooks/repo";
+import useRepo from "../../../store/features/repo/hook";
 import { getFileIcon } from "../directory/fileIcons";
 
 interface FileListProps {
   searchQuery: string;
   onFileSelect: (file: string) => void;
 }
-
 
 const FileList: React.FC<FileListProps> = ({ searchQuery, onFileSelect }) => {
   const { files } = useRepo();

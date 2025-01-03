@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useMemo } from "react";
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView, ViewUpdate, keymap } from "@codemirror/view";
 import { languageConfigurations } from "./language";
-import useEditor from "../store/hooks/editor";
+import useEditor from "../store/features/editor/hook";
 import { basicSetup } from "codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { history, historyKeymap } from "@codemirror/commands";

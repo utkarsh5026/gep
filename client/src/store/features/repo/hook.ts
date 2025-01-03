@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from "react";
-import { useAppSelector, useAppDispatch } from "../root/hooks.ts";
-import {
-  type FileNode,
-  fetchRepoStructure as fetchRepoThunk,
-} from "../slices/repo";
+import { useAppSelector, useAppDispatch } from "../../root/hooks.ts";
+import { fetchRepoStructure as fetchRepoThunk } from "./slice";
+import type { FileNode } from "./type.d";
 
 interface RepoState {
   repoLink: string | null;

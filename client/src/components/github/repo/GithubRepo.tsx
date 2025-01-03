@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import useRepo from "../../../store/hooks/repo.ts";
+import useRepo from "../../../store/features/repo/hook";
 import SearchableDirectoryTree from "../directory/SearchableDirectoryTree.tsx";
 import ChatWindow from "../chat/ChatWindow.tsx";
 import EditorTabs from "../editor/EditorTabs.tsx";

@@ -1,35 +1,44 @@
 import React, { useCallback, useEffect } from "react";
 import { useCodeMirror } from "../../../code/useCodeMirror";
+import useChat from "../../../store/features/chat/hook";
+import { getFileName } from "../../../utils/file";
 
 interface CodeEditorProps {
   fileId: string;
-  onChange?: (value: string) => void;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({ fileId, onChange }) => {
+const CodeEditor: React.FC<CodeEditorProps> = ({ fileId }) => {
   const { containerRef, getSelection } = useCodeMirror({
     fileId,
-    onChange,
   });
+  const { addFileToHumanMsg, currentHumanMessage } = useChat();
+
+  console.log(currentHumanMessage?.contextFiles);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === "l") {
         event.preventDefault();
         const selectedText = getSelection();
-        if (selectedText) {
-          console.log(selectedText);
-        }
+        if (!selectedText) return;
+
+        const { startLine, endLine, text } = selectedText;
+        addFileToHumanMsg({
+          path: fileId,
+          fileName: getFileName(fileId),
+          startLine,
+          endLine,
+          content: text,
+        });
       }
     },
-    [getSelection]
+    [getSelection, addFileToHumanMsg, fileId]
   );
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container) {
-      container.addEventListener("keydown", handleKeyDown);
-    }
+    if (container) container.addEventListener("keydown", handleKeyDown);
+
     return () => {
       container?.removeEventListener("keydown", handleKeyDown);
     };

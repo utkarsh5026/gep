@@ -7,7 +7,7 @@ import {
   updateEditorViewState as updateEditorViewStateAction,
   getFileContent,
 } from "./slice";
-import useRepo from "../../hooks/repo.ts";
+import useRepo from "../repo/hook";
 import { shallowEqual } from "react-redux";
 import type { EditorFile } from "./type";
 

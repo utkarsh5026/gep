@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import useEditor from "../../../store/hooks/editor";
+import useEditor from "../../../store/features/editor/hook";
 import CodeEditor from "./CodeEditor";
 import { Tabs, TabsContent, TabsList } from "../../ui/tabs";
 import TabTrigger from "./EditorTabsTrigger";
