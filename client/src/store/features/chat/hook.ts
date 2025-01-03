@@ -1,11 +1,11 @@
 import { useCallback } from "react";
-import { useAppSelector, useAppDispatch } from "../root/hooks";
+import { useAppSelector, useAppDispatch } from "../../root/hooks.ts";
 import {
-  type SelectedFile,
   createNewChat as createNewChatAction,
   setCurrentChatId as setCurrentChatIdAction,
   setCurrentHumanMessage as setCurrentHumanMessageAction,
-} from "../features/chat/slice.ts";
+} from "./slice.ts";
+import type { SelectedFile } from "./type";
 
 export const FULL_FILE_START_LINE = -1;
 export const FULL_FILE_END_LINE = -1;
@@ -65,7 +65,6 @@ const useChat = () => {
     (chatId: string) => dispatch(setCurrentChatIdAction(chatId)),
     [dispatch]
   );
-
 
   return {
     currentChatId,

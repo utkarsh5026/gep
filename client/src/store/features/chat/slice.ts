@@ -1,29 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-
-export type SelectedFile = {
-  path: string;
-  fileName: string;
-  startLine: number;
-  endLine: number;
-  content: string | null;
-};
-
-export type HumanMessage = {
-  messageText: string;
-  contextFiles: SelectedFile[];
-};
-
-export type AiMessage = {
-  messageText: string;
-  codeTexts: string[];
-};
-
-export type Chat = {
-  chatId: string;
-  messages: (HumanMessage | AiMessage)[];
-  currentHumanMessage: HumanMessage | null;
-};
+import type { Chat, HumanMessage } from "./type";
 
 interface ChatState {
   currentChatId: string;
