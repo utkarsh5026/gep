@@ -10,7 +10,7 @@ import { getFileIcon } from "../directory/fileIcons";
 import useChat, {
   FULL_FILE_START_LINE,
   FULL_FILE_END_LINE,
-} from "../../../store/hooks/chat";
+} from "../../../store/features/chat/hook";
 
 const SelectedFileList: React.FC = () => {
   const { currentHumanMessage } = useChat();

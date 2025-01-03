@@ -6,6 +6,7 @@ export type SelectedFile = {
   fileName: string;
   startLine: number;
   endLine: number;
+  content: string | null;
 };
 
 export type HumanMessage = {

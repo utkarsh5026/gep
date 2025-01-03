@@ -5,7 +5,7 @@ import {
   createNewChat as createNewChatAction,
   setCurrentChatId as setCurrentChatIdAction,
   setCurrentHumanMessage as setCurrentHumanMessageAction,
-} from "../slices/chat";
+} from "../features/chat/slice.ts";
 
 export const FULL_FILE_START_LINE = -1;
 export const FULL_FILE_END_LINE = -1;
@@ -65,6 +65,7 @@ const useChat = () => {
     (chatId: string) => dispatch(setCurrentChatIdAction(chatId)),
     [dispatch]
   );
+
 
   return {
     currentChatId,

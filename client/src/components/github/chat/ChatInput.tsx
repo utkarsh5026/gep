@@ -3,13 +3,15 @@ import { Plus } from "lucide-react";
 import useChat, {
   FULL_FILE_END_LINE,
   FULL_FILE_START_LINE,
-} from "../../../store/hooks/chat";
+} from "../../../store/features/chat/hook";
 import SelectedFileList from "./SelectedFileList";
 import ChatInputTextArea from "./ChatInputTextArea";
 import FileSearchPopup from "./FileSearchPopup";
+import FileContentViewer from "./FileContentViewer";
 
 const ChatInput: React.FC = () => {
   const [showFileSearch, setShowFileSearch] = useState(false);
+  const [previewCode, setPreviewCode] = useState("");
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { currentHumanMessage, addFileToHumanMsg } = useChat();
 
@@ -41,6 +43,7 @@ const ChatInput: React.FC = () => {
         fileName,
         startLine: FULL_FILE_START_LINE,
         endLine: FULL_FILE_END_LINE,
+        content: null,
       };
       addFileToHumanMsg(newFile);
     }
@@ -53,6 +56,15 @@ const ChatInput: React.FC = () => {
         <FileSearchPopup
           onFileSelect={handleFileSelect}
           onClose={() => setShowFileSearch(false)}
+        />
+      )}
+
+      {previewCode && (
+        <FileContentViewer
+          content={previewCode}
+          fileName={previewCode}
+          isOpen={true}
+          onClose={() => setPreviewCode("")}
         />
       )}
 

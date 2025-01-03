@@ -1,5 +1,5 @@
 import React from "react";
-import useChat from "../../../store/hooks/chat";
+import useChat from "../../../store/features/chat/hook";
 
 /**
  * A text area for the chat input
