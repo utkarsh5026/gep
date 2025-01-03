@@ -3,19 +3,9 @@ import {
   type PayloadAction,
   createAsyncThunk,
 } from "@reduxjs/toolkit";
-import api from "../../client/axios";
-import { getLanguageByExtension } from "../../code/language";
-
-export type EditorFile = {
-  id: string;
-  path: string;
-  name: string;
-  content: string;
-  language: string;
-  cursorPosition?: number;
-  scrollPosition?: number;
-  isModified: boolean;
-};
+import api from "../../../client/axios.ts";
+import { getLanguageByExtension } from "../../../code/language.ts";
+import type { EditorFile } from "./type";
 
 interface EditorState {
   openFiles: EditorFile[];

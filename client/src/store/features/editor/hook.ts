@@ -1,16 +1,18 @@
-import { useCallback } from "react";
-import { useAppDispatch, useAppSelector } from "../root/hooks";
+import { useCallback, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../root/hooks.ts";
 import {
   openFile as openFileAction,
   updateFileContent as updateFileContentAction,
   closeFile as closeFileAction,
   updateEditorViewState as updateEditorViewStateAction,
   getFileContent,
-  type EditorFile,
-} from "../slices/editor";
-import useRepo from "./repo";
+} from "./slice";
+import useRepo from "../../hooks/repo.ts";
+import { shallowEqual } from "react-redux";
+import type { EditorFile } from "./type";
 
 type EditorHook = {
+  openFileIds: string[];
   openFiles: EditorFile[];
   activeFileId: string | null;
   editorConfig: {
@@ -45,11 +47,29 @@ type EditorHook = {
  *   - fetchFileContent: Function to fetch a file's content
  */
 const useEditor = (): EditorHook => {
-  const { repoLink } = useRepo();
   const dispatch = useAppDispatch();
-  const { openFiles, activeFileId, editorConfig } = useAppSelector(
-    (state) => state.editor
+
+  // Track file IDs separately for stable comparison
+  const openFileIds = useAppSelector(
+    (state) => state.editor.openFiles.map((f) => f.id),
+    shallowEqual
   );
+
+  // Get full file data
+  const openFiles = useAppSelector((state) => state.editor.openFiles);
+
+  // Debug hook to track reference changes
+  useEffect(() => {
+    console.log("openFileIds changed:", openFileIds);
+  }, [openFileIds]);
+
+  // Use separate selectors for each piece of state
+  const activeFileId = useAppSelector((state) => state.editor.activeFileId);
+  const editorConfig = useAppSelector(
+    (state) => state.editor.editorConfig,
+    shallowEqual
+  );
+  const repoLink = useRepo().repoLink;
 
   const openFile = useCallback(
     (file: EditorFile) => {
@@ -59,16 +79,13 @@ const useEditor = (): EditorHook => {
   );
 
   const updateFileContent = useCallback(
-    (fileId: string, content: string) => {
-      dispatch(updateFileContentAction({ fileId, content }));
-    },
+    (fileId: string, content: string) =>
+      dispatch(updateFileContentAction({ fileId, content })),
     [dispatch]
   );
 
   const closeFile = useCallback(
-    (fileId: string) => {
-      dispatch(closeFileAction(fileId));
-    },
+    (fileId: string) => dispatch(closeFileAction(fileId)),
     [dispatch]
   );
 
@@ -83,12 +100,12 @@ const useEditor = (): EditorHook => {
 
   const setCurrentFile = useCallback(
     (fileId: string) => {
-      const file = openFiles.find((f) => f.id === fileId);
+      const file = openFileIds.find((f) => f === fileId);
       if (file) {
-        dispatch(openFileAction(file));
+        dispatch(openFileAction(openFiles.find((f) => f.id === fileId)!));
       }
     },
-    [dispatch, openFiles]
+    [dispatch, openFileIds, openFiles]
   );
 
   const fetchFileContent = useCallback(
@@ -99,6 +116,7 @@ const useEditor = (): EditorHook => {
   );
 
   return {
+    openFileIds,
     openFiles,
     activeFileId,
     editorConfig,

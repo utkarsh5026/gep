@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import repoReducer from "../slices/repo";
-import editorReducer from "../slices/editor";
-import chatReducer from "../slices/chat";
+import editorReducer from "../features/editor/slice";
+import chatReducer from "../features/chat/slice";
 import panelReducer from "../slices/window";
 
 export const store = configureStore({
