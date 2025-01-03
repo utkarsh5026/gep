@@ -1,14 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-import type { Chat, HumanMessage } from "./type";
-
-interface ChatState {
-  currentChatId: string;
-  chats: Chat[];
-  loading: boolean;
-  error: string | null;
-  chatMap: Record<string, Chat>;
-}
+import type { Chat, HumanMessage, ChatState } from "./type";
 
 /**
  * Create a new chat with a unique ID

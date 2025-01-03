@@ -45,3 +45,19 @@ export type Chat = {
   /** The current message being composed by the human user */
   currentHumanMessage: HumanMessage | null;
 };
+
+/**
+ * Represents the global state for chat functionality
+ */
+export type ChatState = {
+  /** ID of the currently active chat */
+  currentChatId: string;
+  /** Array of all chat sessions */
+  chats: Chat[];
+  /** Whether a chat operation is in progress */
+  loading: boolean;
+  /** Error message if something went wrong, null otherwise */
+  error: string | null;
+  /** Map of chat IDs to chat objects for quick lookup */
+  chatMap: Record<string, Chat>;
+};
