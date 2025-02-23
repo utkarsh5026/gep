@@ -8,8 +8,8 @@ class BaseCommand(ABC):
         self.console = console
 
     @abstractmethod
-    def run(self):
-        """Run the command"""
+    def setup(self):
+        """Setup the CLI"""
         pass
 
     def error(self, message: str, e: Exception):
@@ -18,5 +18,4 @@ class BaseCommand(ABC):
             f"[bold red]{message}:[/bold red]\n{str(e)}",
             title="[bold red]Error[/bold red]",
             border_style="red",
-            padding=(1, 2)
-        ))
+            padding=(1, 2)))
