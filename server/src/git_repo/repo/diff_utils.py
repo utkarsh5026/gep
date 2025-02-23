@@ -1,3 +1,4 @@
+from textwrap import indent
 import git
 from pathlib import Path
 from typing import  Literal, Optional
@@ -71,9 +72,9 @@ class DiffUtils:
         Returns:
             FileChange model with information about the change
         """
-
         change_type = cls.determine_change_type(diff)
         is_binary = cls.is_binary_file(diff)
+        print(f"\nNew File: {diff.new_file}, Deleted File: {diff.deleted_file}, Renamed: {diff.renamed}, A Path: {diff.a_path}, B Path: {diff.b_path}")
 
         diff_text = None
         if not is_binary and diff.diff:

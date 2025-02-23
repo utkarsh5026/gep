@@ -1,4 +1,4 @@
-from command.commands import cli
+from command.internal.cli import cli
 
 
 if __name__ == "__main__":

@@ -2,15 +2,18 @@ import os
 
 from typing import Optional
 from pathlib import Path
+from rich.markdown import Markdown
 import rich_click as click
 
 from rich.console import Console
 from git_repo.repo import Repository
 from git_repo.commit import CommitHistoryAnalyzer, CommitOptions
+from git_repo.commit.msg import LLMCommitGenerator
 
 from .base import BaseCommand
-from .cli import cli, async_command, display_markdown_stream
-from .options import with_llm_options, LLMConfigOptions
+from command.internal.cli import cli, async_command
+from command.internal.options import with_llm_options, LLMConfigOptions
+from command.internal.md import display_markdown_stream
 
 
 class RepoCommand(BaseCommand):
@@ -69,6 +72,21 @@ class RepoCommand(BaseCommand):
             self._compare_commits(base, target)
 
 
+        @repo.command(name="commit-msg")
+        @with_llm_options
+        @async_command
+        async def show_commit_msg(llm_options: LLMConfigOptions):
+            """
+            Generate a commit message for the latest changes in the repository using named options.
+
+            Examples:
+
+                Generate a commit message:
+                ``git-repo repo commit-msg``
+            """
+            await self._show_commit_msg(llm_options)
+
+
     @classmethod
     def _get_repo(cls):
         """
@@ -79,7 +97,7 @@ class RepoCommand(BaseCommand):
             if (current_dir / '.git').is_dir():
                 return Repository(str(current_dir))
             current_dir = current_dir.parent
-            
+        
         raise ValueError("Not inside a Git repository")
 
 
@@ -91,5 +109,15 @@ class RepoCommand(BaseCommand):
             console = self.console
             generator = analyzer.analyze_commit_history(opts, llm_options.llm_type)
             await display_markdown_stream(console, generator)
-        except Exception as e:
+        except Exception as e:      
             self.console.print(f"[red]Error analyzing commit history: {str(e)}[/red]")
+
+
+    async def _show_commit_msg(self, llm_options: LLMConfigOptions):
+        """Show a commit message for the latest changes in the repository"""
+        try:
+            repo = self._get_repo()
+            generator = LLMCommitGenerator(repo, llm_provider=llm_options.llm_type)
+            await display_markdown_stream(self.console, generator.generate_message())
+        except Exception as e:
+            raise e

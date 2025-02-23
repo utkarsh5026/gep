@@ -2,9 +2,9 @@ import git
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Generator, List, Set
-from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
+from git.exc import InvalidGitRepositoryError, NoSuchPathError
 
-from .models import CommitDiff, CommitDescription, StagedFileChanges, DiffResult
+from .models import CommitDiff, CommitDescription, FileInfo, DiffResult
 from .exceptions import GitError, RepositoryError, CommitError
 from .file_utils import FileUtils as FileHandler
 from .diff_utils import DiffUtils
@@ -223,45 +223,15 @@ class Repository:
             stats=stats
         )
 
-    def _get_staged_untracked_files(self) -> Set[Path]:
-        """
-        Get all untracked files that are staged for commit.
-
-        Returns:
-            Set of paths to untracked but staged files
-        """
-        try:
-            untracked = set(self._repo.untracked_files)
-            staged = set()
-            for file_path in untracked:
-                if file_path in self._repo.index.untracked_files:
-                    staged.add(Path(file_path))
-            return staged
-
-        except Exception as e:
-            raise RepositoryError("Failed to get untracked staged files", cause=e)
-
-    def get_staged_changes(self) -> List[StagedFileChanges]:
+    def get_staged_changes(self) -> List[FileInfo]:
         """
         Get information about all files that are currently staged for commit.
-
-        This method processes both tracked files with staged changes and untracked
-        staged files. For each file, it collects:
-        - The file path
-        - Type of change (added, modified, deleted, renamed)
-        - Diff text showing the changes
-        - Old and new content where applicable
-
-        Returns:
-            List[StagedFileChanges]: List of staged file changes with their details
-
-        Raises:
-            GitError: If there's an error accessing the staged changes
+        Fixed to correctly handle diff direction for staged changes.
         """
         try:
             staged_files = []
-
-            for diff in self._repo.index.diff(self._repo.head.commit):
+            index_tree = self._repo.index.write_tree()
+            for diff in self._repo.head.commit.diff(index_tree):
                 try:
                     file_change = DiffUtils.process_diff(
                         diff=diff,
@@ -272,18 +242,6 @@ class Repository:
                 except Exception as e:
                     path = diff.b_path if diff.b_path else diff.a_path
                     print(f"Warning: Error processing staged change for file '{path}': {e}")
-
-            staged_untracked = self._get_staged_untracked_files()
-            for file_path in staged_untracked:
-                try:
-                    file_change = DiffUtils.process_new_file(
-                        file_path=file_path,
-                        file_handler=self.file_handler
-                    )
-                    if file_change:
-                        staged_files.append(file_change)
-                except Exception as e:
-                    print(f"Warning: Error processing new file '{file_path}': {e}")
 
             return staged_files
         except Exception as e:
