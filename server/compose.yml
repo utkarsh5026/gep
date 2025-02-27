@@ -1,0 +1,16 @@
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./dist:/dist
+
+  app:
+    image: python:3.12-alpine
+    volumes:
+      - ./dist:/app/dist
+    working_dir: /app
+    command: sh -c "ls -la /app/dist && echo 'Ready to use the built executables'"
+    depends_on:
+      - builder

@@ -6,12 +6,13 @@ from .base import BaseCommand
 from command.internal.cli import cli, async_command
 from project.proj import Project
 from vectorstores import VectorStoreType, CreateVectorStoreConfig
-from vectorstores.search_analyzer import SearchAnalyzer, ScoreInterpretation
+from vectorstores.search_analyzer import SearchAnalyzer
 from command.internal.options import with_llm_options, LLMConfigOptions
 
 
 class ProjectCommand(BaseCommand):
     def __init__(self, console: Console):
+        super().__init__(console)
         self.console = console
 
     def setup(self):
@@ -37,20 +38,21 @@ class ProjectCommand(BaseCommand):
             )
 
             with self.console.status("[bold green]Scanning repository...") as status:
-                project = await Project.find_root_and_init(config,
-                                                           update_callback=lambda msg: status.update(
-                                                               f"[bold green]{msg}")
-                                                           )
-                text = await project.vectorize()
+                proj = await Project.find_root_and_init(config,
+                                                        update_callback=lambda msg: status.update(
+                                                            f"[bold green]{msg}")
+                                                        )
+                text = await proj.vectorize()
 
             self.console.print(text)
 
         @project.command(name="files")
         @click.option("--query", "-q", type=str, help="The query to search for in the project")
-        @click.option("--limit", "-l", type=int, default=10, help="The number of results to return, default is 10")
-        @with_llm_options
+        @click.option("--limit",
+                      "-l",
+                      type=int, default=10, help="The number of results to return, default is 10")
         @async_command
-        async def files(query: str, limit: int, llm_options: LLMConfigOptions):
+        async def files(query: str, limit: int):
             """
             Search the project files for the given query
 
@@ -64,27 +66,42 @@ class ProjectCommand(BaseCommand):
             config = CreateVectorStoreConfig(
                 store_type=VectorStoreType.FAISS.value,
             )
-            project = await Project.find_root_and_init(config)
+            proj = await Project.find_root_and_init(config)
 
             with self.console.status("[bold green]Searching...") as status:
-                results = await project.search(query, limit)
+                results = await proj.search(query, limit)
                 analyzer = SearchAnalyzer(results)
                 analysis = analyzer.analyze()
                 self.console.print(f"Found {len(results)} results:")
-                for i, (result, interpretation) in enumerate(analysis, 1):
-                    self.console.print(
-                        f"\n[bold cyan]{i}.[/bold cyan] [bold]{result.metadata.get('source', 'Unknown source')}[/bold]")
 
-                    # Display the score interpretation with color
+                for i, (result, interpretation) in enumerate(analysis, 1):
+                    # Create a nice header with file path
+                    self.console.print(f"\n[bold cyan]Result {i}[/bold cyan]")
                     self.console.print(
-                        f"Relevance: [{interpretation.color}]{interpretation.relevance}[/{interpretation.color}] "
+                        f"[bold white on blue] {result.metadata.get('source', 'Unknown source')} [/bold white on blue]")
+
+                    # Create a metrics panel with relevance and confidence
+                    self.console.print(f"[dim]{'─' * 50}[/dim]")
+                    self.console.print(
+                        f"[bold]Relevance:[/bold] [{interpretation.color}]{interpretation.relevance}[/{interpretation.color}] "
                         f"({interpretation.percentage}) {interpretation.star_display}")
 
                     self.console.print(
-                        f"Confidence: [{interpretation.color}]{interpretation.confidence}[/{interpretation.color}]")
+                        f"[bold]Confidence:[/bold] [{interpretation.color}]{interpretation.confidence}[/{interpretation.color}]")
+                    self.console.print(f"[dim]{'─' * 50}[/dim]")
 
-                    # Print the content in code format
+                    # Print the content with better formatting
+                    self.console.print("[bold]Code Preview:[/bold]")
                     self.console.print(
-                        Syntax(result.page_content[:100], "python", line_numbers=True))
+                        Syntax(
+                            # Show a bit more content
+                            result.page_content,
+                            "python",
+                            theme="monokai",  # Add a nice theme
+                            word_wrap=True,
+                            padding=(1, 2, 1, 2)
+                        )
+                    )
 
-                    self.console.print()
+                    # Add a clear separator between results
+                    self.console.print(f"[dim]{'═' * 80}[/dim]\n")
