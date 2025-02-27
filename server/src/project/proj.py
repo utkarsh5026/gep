@@ -143,6 +143,12 @@ class Project:
         self.update_callback(
             f"Vectorization complete! {total_docs} documents embedded.")
 
+    async def search(self, query: str, limit: int = 10):
+        """
+        Search the project files for the given query
+        """
+        return await self.vector_store.similarity_search_with_score(query, k=limit)
+
     @classmethod
     async def find_root(cls):
         """
@@ -173,6 +179,6 @@ class Project:
         root = await cls.find_root()
         vector_store_config = CreateVectorStoreConfig(
             store_type=VectorStoreType.FAISS,
-            store_path=str(root / cls.PROJECT_DIR_NAME / "vector_db"),
+            store_path=str(root / cls.PROJECT_DIR_NAME / "faiss_vector_store"),
         )
         return cls(root, vector_store_config, update_callback)
