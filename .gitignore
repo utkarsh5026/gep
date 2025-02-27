@@ -173,3 +173,8 @@ cython_debug/
 
 # Project config
 config.yaml
+
+
+notebooks/
+
+.gep/
