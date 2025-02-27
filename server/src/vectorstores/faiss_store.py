@@ -26,6 +26,27 @@ class FAISSVectorStore(BaseVectorStore):
         self.kwargs = kwargs
         self.store: Optional[FAISS] = None
 
+    @property
+    def similarity_metric(self) -> str:
+        """FAISS uses L2 distance by default."""
+        return "l2"
+
+    @property
+    def score_range(self) -> tuple[float, float]:
+        """L2 distance ranges from 0 (identical) to theoretically infinity."""
+        return (0.0, float('inf'))
+
+    def normalize_score(self, raw_score: float) -> float:
+        """
+        Normalize FAISS L2 distance scores.
+        FAISS returns squared L2 distance, so we need to handle that.
+        """
+        # Convert squared L2 distance to a similarity score (0-100)
+        # For typical embedding vectors, distance rarely exceeds 4.0
+        max_expected_distance = 4.0
+        inverted = max(0, 1 - (raw_score / max_expected_distance))
+        return inverted * 100
+
     async def _ensure_store_loaded(self):
         """Ensure the store is loaded."""
         if self.store is not None:
@@ -33,7 +54,11 @@ class FAISSVectorStore(BaseVectorStore):
 
         if self.store_path.exists():
             load_path = str(self.store_path)
-            self.store = await FAISS.aload_local(load_path, self.embedding_model)
+            self.store = FAISS.load_local(
+                load_path,
+                self.embedding_model,
+                allow_dangerous_deserialization=True
+            )
 
         else:
             dummy_doc = [
@@ -49,7 +74,11 @@ class FAISSVectorStore(BaseVectorStore):
     async def similarity_search_with_score(self, query: str, k: int = 4, filter: dict[str, Any] | None = None) -> list[tuple[Document, float]]:
         """Search for documents similar to the query string."""
         await self._ensure_store_loaded()
-        return await self.store.asimilarity_search_with_score(query, k=k, filter=filter)
+        results = await self.store.asimilarity_search_with_score(query, k=k, filter=filter)
+        return [
+            (doc, self.normalize_score(score))
+            for doc, score in results
+        ]
 
     async def add_documents(self, documents: list[Document]) -> list[str]:
         """Add documents to the vector store."""
