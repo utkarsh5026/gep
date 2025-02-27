@@ -25,7 +25,6 @@ class RepoScanner:
                 name=file_path.name,
                 rel_file_path=relative_path,
                 directory=file_path.parent,
-                extension=os.path.splitext(file_path)[1].lower(),
                 size=size
             )
 
