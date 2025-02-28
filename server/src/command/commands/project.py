@@ -7,10 +7,13 @@ from command.internal.cli import cli, async_command
 from project.proj import Project
 from vectorstores import VectorStoreType, CreateVectorStoreConfig
 from vectorstores.search_analyzer import SearchAnalyzer
-from command.internal.options import with_llm_options, LLMConfigOptions
 
 
 class ProjectCommand(BaseCommand):
+    """
+    Project Commands Here you can manage your project
+    """
+
     def __init__(self, console: Console):
         super().__init__(console)
         self.console = console
@@ -19,7 +22,10 @@ class ProjectCommand(BaseCommand):
         @cli.group(name="project")
         def project():
             """
-            Project Commands Here you can manage your project
+            Project Commands - Manage your codebase, search, and analyze your project.
+
+            This group contains commands for working with your project, including
+            vectorizing your codebase for semantic search and searching through files.
             """
 
         @project.command(name="vectorize")
@@ -28,11 +34,33 @@ class ProjectCommand(BaseCommand):
             "-vt",
             type=click.Choice(VectorStoreType.list_types()),
             default=VectorStoreType.FAISS.value,
-            help="The type of vector store to use",
+            help="The type of vector store to use (faiss, chroma, qdrant, etc.)",
         )
+        @click.option("--from-scratch", "-f", is_flag=True, help="Vectorize from scratch instead of incremental update", default=False)
         @async_command
-        async def vectorize(vector_store_type: VectorStoreType):
+        async def vectorize(vector_store_type: VectorStoreType, from_scratch: bool):
+            """
+            Vectorize your project's codebase for semantic search capabilities.
 
+            This command analyzes your code and creates vector embeddings that enable
+            semantic search through your project. By default, it performs an incremental
+            update, only processing new or changed files.
+
+            Options:
+              --vector-store-type, -vt  Specify which vector database to use
+                                        (default: faiss)
+              --from-scratch, -f        Force complete re-indexing of all files
+
+            Examples:
+              ## Vectorize using Chroma and start from scratch
+              git-repo project vectorize --vector-store-type chroma --from-scratch
+
+              ## Incrementally update using Qdrant
+              git-repo project vectorize --vector-store-type qdrant
+
+              ## Quick update with default settings (FAISS)
+              git-repo project vectorize
+            """
             config = CreateVectorStoreConfig(
                 store_type=vector_store_type,
             )
@@ -47,20 +75,34 @@ class ProjectCommand(BaseCommand):
             self.console.print(text)
 
         @project.command(name="files")
-        @click.option("--query", "-q", type=str, help="The query to search for in the project")
+        @click.option("--query", "-q", type=str, help="Natural language query to search for in the project")
         @click.option("--limit",
                       "-l",
-                      type=int, default=10, help="The number of results to return, default is 10")
+                      type=int, default=10, help="Maximum number of results to return (default: 10)")
         @async_command
         async def files(query: str, limit: int):
             """
-            Search the project files for the given query
+            Search your project files using natural language queries.
+
+            This command performs semantic search across your codebase, finding
+            relevant files and code snippets based on your natural language query.
+            Results are ranked by relevance and displayed with syntax highlighting.
+
+            The project must be vectorized first using the 'vectorize' command.
+
+            Options:
+              --query, -q    Your natural language search query
+              --limit, -l    Maximum number of results to show (default: 10)
 
             Examples:
+              ## Find code related to authentication
+              git-repo project files --query "How is authentication implemented?"
 
-            ``git-repo project files --query "How auth is implemented in the project?"``
+              ## Look for the main entry point with fewer results
+              git-repo project files --query "Where is the main function?" --limit 5
 
-            ``git-repo project files --query "What is the main function in the project?" --limit 5``
+              ## Find error handling patterns
+              git-repo project files --query "How are exceptions handled in this project?"
             """
             self.console.print(f"Searching {query}")
             config = CreateVectorStoreConfig(
