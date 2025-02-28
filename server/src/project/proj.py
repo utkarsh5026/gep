@@ -22,12 +22,20 @@ class Project:
     PROJECT_DIR_NAME = ".gep"
 
     def __init__(self, repo_path: Path, vector_store_config: CreateVectorStoreConfig, update_callback: Callable[[str], None] | None = None):
+        """
+        Initialize the Project object.
+
+        Args:
+            repo_path: The path to the repository
+            vector_store_config: The configuration for the vector store
+            update_callback: Optional callback function to report progress
+        """
         self._repo_path = repo_path
-        self.repo_scanner = RepoScanner(repo_path)
         if not vector_store_config.store_path:
             vector_store_config.store_path = str(
                 self.vector_db_path / "faiss_vector_store")
 
+        self.repo_scanner = RepoScanner(repo_path)
         self.vector_store = create_vector_store(vector_store_config)
         self.update_callback = update_callback if update_callback else lambda _: None
 
