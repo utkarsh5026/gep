@@ -1,12 +1,23 @@
 import os
+import git
 import asyncio
 import aiofiles
 import aiofiles.os
 from typing import Optional
 from pathlib import Path
 
+
 from .models import FileInfo
 from .pattern_matcher import GitignorePatternMatcher
+
+
+class FileAlreadyIgnoredError(Exception):
+    """
+    Exception raised when a file is ignored and even_if_ignored is False.
+    """
+
+    def __init__(self, file_path: Path):
+        super().__init__(f"File {file_path} is already ignored")
 
 
 class RepoScanner:
@@ -23,6 +34,13 @@ class RepoScanner:
 
     def __init__(self, repo_path: Path):
         self.repo_path = repo_path
+        self._has_git = False
+        try:
+            self._git_repo = git.Repo(repo_path)
+            self._has_git = True
+        except git.InvalidGitRepositoryError:
+            self._has_git = False
+
         self._scanned_files: Optional[list[FileInfo]] = None
         self.pattern_matcher = GitignorePatternMatcher(repo_path)
         self._patterns_loaded = False
@@ -149,3 +167,42 @@ class RepoScanner:
                 raise ValueError("Not inside a Git repository")
 
         return cls(curr_path)
+
+    async def check_file_accessible(self, file_path: Path, even_if_ignored: bool = False):
+        """
+        Check if a file is accessible (exists and not ignored).
+
+        Args:
+            file_path: Path to the file
+            even_if_ignored: If True, check if the file is ignored
+        """
+        await self._ensure_patterns_loaded()
+        rel_path = self.rel_path(file_path)
+        if not even_if_ignored and self.pattern_matcher.is_path_ignored(rel_path):
+            raise FileAlreadyIgnoredError(file_path)
+
+        if not file_path.exists():
+            raise FileNotFoundError(f"File {file_path} not found")
+
+        if not file_path.is_file():
+            raise FileNotFoundError(f"File {file_path} is not a file")
+
+    async def load_file_content(self, file_path: Path, even_if_ignored: bool = False) -> Optional[str]:
+        """
+        Load the content of a file from the repository.
+
+        Args:
+            file_path (Path): The path to the file
+
+        Returns:
+            The content of the file or None if the file is ignored
+        """
+        await self._ensure_patterns_loaded()
+        await self.check_file_accessible(file_path, even_if_ignored)
+
+        async with aiofiles.open(file_path, 'r') as f:
+            return await f.read()
+
+    def rel_path(self, path: Path) -> str:
+        """Get the relative path of a file from the repository root"""
+        return str(path.relative_to(self.repo_path))
