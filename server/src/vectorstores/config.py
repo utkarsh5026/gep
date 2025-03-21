@@ -3,7 +3,7 @@ from typing import Optional
 from langchain_core.embeddings import Embeddings
 from pydantic import BaseModel
 from .base import BaseVectorStore
-from .faiss_store import FAISSVectorStore
+from .stores.faiss_store import FAISSVectorStore
 
 
 class VectorStoreType(str, Enum):

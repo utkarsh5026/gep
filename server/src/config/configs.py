@@ -32,8 +32,8 @@ class EmbeddingConfig(BaseModel):
     dimension: int = Field(default=DEFAULT_DIMENSION, ge=0)
     additional_params: Optional[dict[str, Any]] = None
 
-    @field_validator('model_name', mode='after')
     @classmethod
+    @field_validator('model_name', mode='after')
     def validate_model_name(cls, v: str, values: ValidationInfo) -> str:
         v = v.strip()
         embedding_type = values.data.get('embedding_type')
@@ -117,8 +117,8 @@ class VectorConfig(BaseModel):
     dimension: int = Field(default=1536, ge=0)
     additional_params: Optional[dict[str, Any]] = Field(default_factory=dict)
 
-    @field_validator('persist_dir')
     @classmethod
+    @field_validator('persist_dir')
     def validate_persist_dir(cls, v: Path):
         v = v.resolve()
         try:
@@ -158,8 +158,8 @@ class ProjectConfig(BaseModel):
             ignore_patterns=data.get('ignore_patterns', [])
         )
 
-    @field_validator('root_dir')
     @classmethod
+    @field_validator('root_dir')
     def validate_root_dir(cls, v: Path) -> Path:
         v = v.resolve()
         if not v.exists():

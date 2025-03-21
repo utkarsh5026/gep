@@ -2,7 +2,6 @@ from typing import AsyncGenerator, Dict, List, Optional
 from dataclasses import dataclass
 from pathlib import Path
 
-from pydantic import Field, BaseModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
@@ -10,11 +9,6 @@ from git_repo.repo import Repository
 from llm import LLMProviderType
 
 
-class CommitSuggestion(BaseModel):
-    """Structure for holding a commit message suggestion with context."""
-    subject: str    # The main commit message
-    details: str    # Additional details about the changes
-    reasoning: str  # The LLM's explanation of why it chose this message
 
 class LLMCommitGenerator:
     """
@@ -113,9 +107,6 @@ class LLMCommitGenerator:
             'content_changes': '\n\n'.join(changes['content']) or "No content changes available"
         }
 
-        with open("p.json", "w") as f:
-            import json
-            json.dump(prompt_variables, f, indent=4)
         chain = self.prompt | self.llm | StrOutputParser()
         async for result in chain.astream(prompt_variables):
             yield result

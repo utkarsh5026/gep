@@ -2,7 +2,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from .base import BaseCommand
-from config import verify_provider, init_project
+from config import verify_provider
 
 
 class InitProjectCommand(BaseCommand):

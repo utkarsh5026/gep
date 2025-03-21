@@ -246,3 +246,71 @@ class Repository:
             return staged_files
         except Exception as e:
             raise RepositoryError("Failed to get staged changes", cause=e)
+
+    def get_unstaged_files(self) -> List[Path]:
+        """
+        Get all files with unstaged changes, including modified, deleted, and untracked files.
+        
+        Returns:
+            List[Path]: List of paths for all unstaged files
+        """
+        unstaged_files = set()
+        
+        # Get status in porcelain format
+        status_output = self._repo.git.status(
+            porcelain="v1",
+            untracked_files=True
+        )
+        
+        for line in status_output.splitlines():
+            if not line:
+                continue
+                
+            unstaged_status = line[1]
+            path = line[3:].strip()
+            
+            # Add files with unstaged changes
+            if unstaged_status in "MADRC?" or line.startswith("??"):
+                # Handle renamed/copied files
+                if unstaged_status in "RC":
+                    old_path, new_path = path.split(" -> ")
+                    unstaged_files.add(Path(new_path))
+                else:
+                    unstaged_files.add(Path(path))
+                    
+        return sorted(list(unstaged_files))
+
+    def get_staged_files(self) -> List[Path]:
+        """
+        Get all files that are staged for commit.
+        
+        Returns:
+            List[Path]: List of paths for all staged files, including new, modified,
+                    deleted, and renamed files.
+        
+        This implementation uses git status --porcelain=v1 to reliably track all possible
+        staging states. The porcelain format ensures stable parsing across Git versions.
+        """
+        staged_files = set()
+        
+        # Get status in porcelain format for stable parsing
+        status_output = self._repo.git.status(
+            porcelain="v1",
+            untracked_files=True
+        )
+        
+        for line in status_output.splitlines():
+            if not line:
+                continue
+            staged_status = line[0]
+            path = line[3:].strip()
+            
+            if staged_status in "MADRC":  # Modified, Added, Deleted, Renamed, Copied
+                # Handle renamed/copied files which show as "R/C old_path -> new_path"
+                if staged_status in "RC":
+                    _, new_path = path.split(" -> ")
+                    staged_files.add(Path(new_path))
+                else:
+                    staged_files.add(Path(path))
+                    
+        return sorted(list(staged_files))

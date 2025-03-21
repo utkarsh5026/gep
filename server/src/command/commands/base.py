@@ -15,7 +15,7 @@ class BaseCommand(ABC):
     def error(self, message: str, e: Exception):
         """Print an error message"""
         self.console.print(Panel(
-            f"[bold red]{message}:[/bold red]\n{str(e)}",
+            f"[bold red]{message}:[/bold red]\n{str(e.with_traceback(None))}",
             title="[bold red]Error[/bold red]",
             border_style="red",
             padding=(1, 2)))

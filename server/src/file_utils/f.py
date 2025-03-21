@@ -1,6 +1,7 @@
 import aiofiles
 from pathlib import Path
-from typing import Literal
+from typing import Literal, List
+from pathspec import PathSpec
 
 TextMode = Literal[
     'w', 'wt', 'tw',      # Write text
@@ -106,3 +107,51 @@ Write content to a file
             f"Failed to encode content for file {
                 file_path} with encoding '{encoding}'. "
             f"Original error: {str(e)}")
+
+
+async def parse_gitignore(root_dir: Path) -> List[str]:
+    """
+    Parse all .gitignore files in the given directory and its subdirectories.
+    Returns a list of ignore patterns.
+
+    Args:
+        root_dir (Path): Root directory to start searching from
+
+    Returns:
+        list[str]: List of unique gitignore patterns
+
+    Raises:
+        FileNotFoundError: If root_dir doesn't exist
+        PermissionError: If directories can't be accessed
+    """
+    if not root_dir.exists():
+        raise FileNotFoundError(f"Directory not found: {root_dir}")
+    if not root_dir.is_dir():
+        raise NotADirectoryError(f"Path is not a directory: {root_dir}")
+
+    ignore_patterns = set()
+    
+    # Process all .gitignore files in the directory tree
+    async def process_directory(directory: Path):
+        try:
+            gitignore_file = directory / '.gitignore'
+            if gitignore_file.is_file():
+                content = await read_file(gitignore_file)
+                # Process each line in the .gitignore file
+                for line in content.splitlines():
+                    # Skip empty lines and comments
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        ignore_patterns.add(line)
+            
+            # Recursively process subdirectories
+            for item in directory.iterdir():
+                if item.is_dir() and not item.name.startswith('.'):
+                    await process_directory(item)
+        except PermissionError:
+            print(f"Warning: Permission denied accessing {directory}")
+        except Exception as e:
+            print(f"Warning: Error processing {directory}: {str(e)}")
+    
+    await process_directory(root_dir)
+    return sorted(list(ignore_patterns))

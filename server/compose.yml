@@ -14,3 +14,25 @@ services:
     command: sh -c "ls -la /app/dist && echo 'Ready to use the built executables'"
     depends_on:
       - builder
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    volumes:
+      - chroma-data:/chroma/chroma
+    ports:
+      - "8000:8000"
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+volumes:
+  chroma-data:
+  qdrant-data:

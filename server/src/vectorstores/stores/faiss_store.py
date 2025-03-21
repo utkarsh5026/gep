@@ -7,7 +7,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
-from .base import BaseVectorStore, VectorStoreRegistry
+from ..base import BaseVectorStore, VectorStoreRegistry
 
 
 @VectorStoreRegistry.register("faiss")
@@ -34,7 +34,7 @@ class FAISSVectorStore(BaseVectorStore):
     @property
     def score_range(self) -> tuple[float, float]:
         """L2 distance ranges from 0 (identical) to theoretically infinity."""
-        return (0.0, float('inf'))
+        return 0.0, float('inf')
 
     def normalize_score(self, raw_score: float) -> float:
         """
@@ -98,7 +98,6 @@ class FAISSVectorStore(BaseVectorStore):
     async def clear(self) -> None:
         """Clear all documents from the store."""
         await self._ensure_store_loaded()
-        await self.store.aclose()
         self.store = None
 
     async def get_stats(self) -> dict[str, Any]:

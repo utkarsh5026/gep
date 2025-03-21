@@ -8,10 +8,16 @@ from vector import VectorStoreType, EmbeddingProviderType
 from query import QueryProcessor, LLMType
 from prompt import PromptProviderType, PromptType
 from config import ProjectManager
-from command.commands import EmbedCommand, APIKeyCommand, InitProjectCommand, SampleConfigCommand, UpdateIgnoreCommand
+from command.commands import (
+    EmbedCommand,
+    APIKeyCommand,
+    InitProjectCommand,
+    SampleConfigCommand,
+    UpdateIgnoreCommand,
+    RepoCommand,
+)
 
-
-# Configure rich-click
+# Configurerich-click
 click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -57,8 +63,13 @@ def cli():
 @click.argument('query', required=True)
 @click.argument('relevance_score', default=0.5, type=float)
 @click.argument('max_results', default=10, type=int)
-@click.option('--prompt_type', '-t', type=click.Choice(prompt_types), default='file_wise', help='The type of prompt to use for processing the query')
-@click.option('--prompt_provider', '-p', type=click.Choice(prompt_providers), default='semantic', help='The type of prompt provider to use for processing the query')
+@click.option('--prompt_type', '-t',
+              type=click.Choice(prompt_types),
+              default='file_wise',
+              help='The type of prompt to use for processing the query')
+@click.option('--prompt_provider',
+              '-p',
+              type=click.Choice(prompt_providers), default='semantic', help='The type of prompt provider to use for processing the query')
 def process_query(query: str, relevance_score: float, max_results: int, prompt_type: str, prompt_provider: str):
     """
     Process a query and return results.
@@ -74,7 +85,7 @@ def process_query(query: str, relevance_score: float, max_results: int, prompt_t
 @click.option('--config-path', '-c', type=click.Path(exists=True), default='config.yaml', help='The path to the project configuration file')
 @click.option('--api-provider', '-a', type=click.Choice(api_providers), default='openai', help='The API provider to use')
 @click.option('--use-gitignore', '-g', is_flag=True, help='Use gitignore to ignore files')
-def load_project(root_path: str, config_path: str, api_provider: str, api_key: str, use_gitignore: bool):
+def load_project(root_path: str, config_path: str, api_provider: str, use_gitignore: bool):
     """
     Load the project.
     """
@@ -119,7 +130,7 @@ def update_ignore(update_vector_store: bool):
                         update_vector_store=update_vector_store).run()
 
 
-@cli.command()
+@cli.group(name='embed')
 def embed():
     """
     Embed the project and store the embeddings in the vector store.
@@ -137,3 +148,18 @@ def api_key(op_type: str, api_provider: str, api_key: str):
     """
 
     APIKeyCommand(console, op_type, api_provider, api_key).run()
+
+
+@cli.command(name="repo")
+@click.argument('subcommand', type=click.Choice(['history', 'compare']), required=False)
+@click.argument('commit1', required=False)
+@click.argument('commit2', required=False)
+def repo(subcommand: str = None, commit1: str = None, commit2: str = None):
+    """
+    Git repository operations
+
+    SUBCOMMAND: Operation to perform (history/compare)
+    COMMIT1: First commit ID for compare operation
+    COMMIT2: Second commit ID for compare operation (optional)
+    """
+    RepoCommand(console).run()

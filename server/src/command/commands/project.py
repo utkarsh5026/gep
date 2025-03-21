@@ -4,9 +4,18 @@ from rich.syntax import Syntax
 
 from .base import BaseCommand
 from command.internal.cli import cli, async_command
-from project.proj import Project
+from command.internal.options import (
+    with_llm_options,
+    LLMConfigOptions,
+    with_file_options,
+    FileOptions
+)
+
 from vectorstores import VectorStoreType, CreateVectorStoreConfig
 from vectorstores.search_analyzer import SearchAnalyzer
+
+from project.proj import Project
+from project.docs import DocsGenerator, DocsGenerationOptions
 
 
 class ProjectCommand(BaseCommand):
@@ -36,7 +45,10 @@ class ProjectCommand(BaseCommand):
             default=VectorStoreType.FAISS.value,
             help="The type of vector store to use (faiss, chroma, qdrant, etc.)",
         )
-        @click.option("--from-scratch", "-f", is_flag=True, help="Vectorize from scratch instead of incremental update", default=False)
+        @click.option("--from-scratch",
+                      "-f",
+                      is_flag=True,
+                      help="Vectorize from scratch instead of incremental update", default=False)
         @async_command
         async def vectorize(vector_store_type: VectorStoreType, from_scratch: bool):
             """
@@ -110,19 +122,17 @@ class ProjectCommand(BaseCommand):
             )
             proj = await Project.find_root_and_init(config)
 
-            with self.console.status("[bold green]Searching...") as status:
+            with self.console.status("[bold green]Searching..."):
                 results = await proj.search(query, limit)
                 analyzer = SearchAnalyzer(results)
                 analysis = analyzer.analyze()
                 self.console.print(f"Found {len(results)} results:")
 
                 for i, (result, interpretation) in enumerate(analysis, 1):
-                    # Create a nice header with file path
                     self.console.print(f"\n[bold cyan]Result {i}[/bold cyan]")
                     self.console.print(
                         f"[bold white on blue] {result.metadata.get('source', 'Unknown source')} [/bold white on blue]")
 
-                    # Create a metrics panel with relevance and confidence
                     self.console.print(f"[dim]{'─' * 50}[/dim]")
                     self.console.print(
                         f"[bold]Relevance:[/bold] [{interpretation.color}]{interpretation.relevance}[/{interpretation.color}] "
@@ -132,18 +142,59 @@ class ProjectCommand(BaseCommand):
                         f"[bold]Confidence:[/bold] [{interpretation.color}]{interpretation.confidence}[/{interpretation.color}]")
                     self.console.print(f"[dim]{'─' * 50}[/dim]")
 
-                    # Print the content with better formatting
                     self.console.print("[bold]Code Preview:[/bold]")
                     self.console.print(
                         Syntax(
-                            # Show a bit more content
                             result.page_content,
                             "python",
-                            theme="monokai",  # Add a nice theme
+                            theme="monokai",
                             word_wrap=True,
                             padding=(1, 2, 1, 2)
                         )
                     )
 
-                    # Add a clear separator between results
                     self.console.print(f"[dim]{'═' * 80}[/dim]\n")
+
+        @project.command(name="docs")
+        @click.option("--query", "-q", type=str, help="Any extra instructions for the LLM when generating the docs")
+        @click.option("--output-dir", "-o", type=str, help="The path to the directory where the docs will be saved", default="./docs")
+        @click.option("--apply-to-files", "-a", is_flag=True, help="Apply the docs to the files in the project", default=False)
+        @click.option("--format", "-f", type=click.Choice(["markdown", "html", "pdf"]), help="The format of the docs", default="markdown")
+        @with_llm_options
+        @with_file_options
+        @async_command
+        async def docs(query: str, output_dir: str, apply_to_files: bool, format: str,
+                       llm_options: LLMConfigOptions, file_options: FileOptions):
+            """
+            Generate documentation for your project using AI.
+
+            This command analyzes your codebase and generates comprehensive documentation
+            based on the code structure, comments, and functionality. You can specify
+            which files to document, the output format, and provide additional instructions
+            to guide the documentation generation process.
+
+            Options:
+              --query, -q             Additional instructions for the AI when generating docs
+              --output-dir, -o        Directory where documentation will be saved (default: ./docs)
+              --apply-to-files, -a    Add documentation directly to source files (default: False)
+              --format, -f            Output format: markdown, html, or pdf (default: markdown)
+              --file-path, -f         Specific file or directory to document
+              --recursive, -r         Process all files in directories recursively
+              --llm-type              AI model to use for documentation generation
+
+            Examples:
+              ## Generate markdown docs for the entire project
+              git-repo project docs
+
+              ## Document a specific module with custom instructions
+              git-repo project docs --file-path src/auth --query "Focus on security aspects"
+
+              ## Create HTML documentation for a single file
+              git-repo project docs --file-path src/main.py --format html
+
+              ## Generate docs and add them directly to source files
+              git-repo project docs --apply-to-files --llm-type gpt-4o
+            """
+            self.console.print(
+                f"Generating documentation with format: {format}")
+            self.console.print(f"Output directory: {output_dir}")
